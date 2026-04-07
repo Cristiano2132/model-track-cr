@@ -1,0 +1,5 @@
+exclude_dirs:
+  - tests
+
+skips:
+  - B101  # assert used (acceptable in internal validation)

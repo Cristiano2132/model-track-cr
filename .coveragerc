@@ -1,0 +1,9 @@
+[run]
+source = src
+relative_files = True
+
+[report]
+omit =
+    tests/*
+    src/model_track/context.py
+    src/model_track/base.py
