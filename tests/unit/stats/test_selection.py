@@ -44,3 +44,29 @@ def test_selector_sample_size_and_fallback():
     selector.fit(df, target="target", features=["f1", "f2"])
 
     assert hasattr(selector, "selected_features_")
+
+
+def test_statistical_selector_full_flow():
+    """Cobre o fit (com amostragem), transform (Linha 58) e filtros."""
+    # Criamos um DF maior para disparar a amostragem do fit
+    size = 100
+    df = pd.DataFrame(
+        {
+            "target": [0, 1] * (size // 2),
+            "feature_ok": [0, 1] * (size // 2),
+            "feature_ruim": [0, 0] * (size // 2),
+        }
+    )
+
+    # iv_threshold baixo para aceitar a feature_ok
+    # sample_size pequeno para forçar o código de amostragem
+    selector = StatisticalSelector(iv_threshold=0.01, sample_size=50)
+
+    selector.fit(df, target="target", features=["feature_ok", "feature_ruim"])
+
+    # Executa transform para cobrir linha 58
+    df_transformed = selector.transform(df)
+
+    assert "feature_ok" in df_transformed.columns
+    assert "target" in df_transformed.columns
+    assert "feature_ruim" not in df_transformed.columns

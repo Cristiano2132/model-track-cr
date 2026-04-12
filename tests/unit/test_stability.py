@@ -1,4 +1,6 @@
 import pandas as pd
+import pytest
+from matplotlib import pyplot as plt
 
 from model_track.woe.stability import CategoryMapper, WoeStability
 
@@ -80,3 +82,59 @@ def test_category_mapper_ordinal_constraint():
     # Ele será forçado a separar os 3, ou juntar vizinhos (ex: <=20 ou >=20)
     map_ordered = mapper.auto_group(matrix, min_groups=2, is_ordered=True)
     assert map_ordered["10"] != map_ordered["30"]
+
+
+@pytest.fixture
+def stability_data():
+    """Gera um DataFrame íntegro (mesmo tamanho de listas)."""
+    return pd.DataFrame(
+        {
+            "safra": ["2023-01"] * 10 + ["2023-02"] * 10,
+            "target": [0, 1] * 10,
+            "feat": ["10", "20", "30", "40", "50"] * 4,
+        }
+    )
+
+
+@pytest.fixture
+def mock_matrix():
+    """Gera uma matriz de WoE para o teste do generate_view."""
+    return pd.DataFrame({"A": [0.1, 0.2], "B": [0.5, 0.4]}, index=["2023-01", "2023-02"])
+
+
+def test_generate_view_correct_return(mock_matrix):
+    """
+    Cobre as linhas 40-49:
+    Garante que o retorno é o AX e valida o título.
+    """
+    ws = WoeStability(date_col="safra")
+
+    # Cenário 1: ax=None (Linhas 40-43) - Cria novo ax internamente
+    ax_new = ws.generate_view(mock_matrix, title="Novo Titulo")
+    assert ax_new.get_title() == "Novo Titulo"
+    plt.close(ax_new.get_figure())  # Fecha a figura via referência do ax
+
+    # Cenário 2: ax fornecido (Linhas 45-49) - Usa o ax externo
+    fig, ax_ext = plt.subplots()
+    ax_returned = ws.generate_view(mock_matrix, ax=ax_ext, title="Titulo Externo")
+
+    assert ax_returned is ax_ext
+    assert ax_ext.get_title() == "Titulo Externo"
+    plt.close(fig)
+
+
+def test_calculate_stability_matrix_flow(stability_data):
+    """Cobre a integração do calculate_stability_matrix."""
+    ws = WoeStability(date_col="safra")
+    matrix = ws.calculate_stability_matrix(stability_data, "feat", "target")
+    assert not matrix.empty
+    assert "10" in matrix.columns
+
+
+def test__is_numeric_from_mapper():
+    """Cobre a função auxiliar _is_numeric do CategoryMapper."""
+    mapper = CategoryMapper()
+    assert mapper._is_numeric("123") is True
+    assert mapper._is_numeric("12.3") is True
+    assert mapper._is_numeric("N/A") is False
+    assert mapper._is_numeric("abc") is False

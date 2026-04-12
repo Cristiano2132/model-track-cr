@@ -27,17 +27,14 @@ def compute_cramers_v(df: pd.DataFrame, f1: str, f2: str) -> float:
     if obs.size == 0 or obs.sum() == 0:
         return 0.0
 
-    try:
-        chi2 = chi2_contingency(obs)[0]
-        n = obs.sum()
-        phi2 = chi2 / n
-        r, k = obs.shape
+    chi2 = chi2_contingency(obs)[0]
+    n = obs.sum()
+    phi2 = chi2 / n
+    r, k = obs.shape
 
-        phi2corr = max(0, phi2 - ((k - 1) * (r - 1)) / (n - 1))
-        rcorr = r - ((r - 1) ** 2) / (n - 1)
-        kcorr = k - ((k - 1) ** 2) / (n - 1)
+    phi2corr = max(0, phi2 - ((k - 1) * (r - 1)) / (n - 1))
+    rcorr = r - ((r - 1) ** 2) / (n - 1)
+    kcorr = k - ((k - 1) ** 2) / (n - 1)
 
-        denom = min((kcorr - 1), (rcorr - 1))
-        return float(np.sqrt(phi2corr / denom)) if denom > 0 else 0.0
-    except Exception:
-        return 0.0
+    denom = min((kcorr - 1), (rcorr - 1))
+    return float(np.sqrt(phi2corr / denom)) if denom > 0 else 0.0

@@ -72,3 +72,86 @@ def test_auditor_compare_nan_handling():
 
     res = auditor.compare_schemas(df_a, df_b)
     assert "val" in res["diff_value_cols"]
+
+
+def test_compare_schemas_one_sided_nan():
+    """Cobre a linha 43: quando apenas um lado é NaN."""
+    auditor = DataAuditor()
+
+    df_a = pd.DataFrame({"v1": [1, 2, 3]})
+    df_b = pd.DataFrame({"v1": [np.nan, np.nan]})  # Média é NaN
+
+    result = auditor.compare_schemas(df_a, df_b)
+    assert "v1" in result["diff_value_cols"]
+
+
+def test_compare_schemas_non_numeric_diff():
+    """Cobre o 'else' final: colunas comuns mas com dtypes diferentes."""
+    auditor = DataAuditor()
+
+    df_a = pd.DataFrame({"feat": ["a", "b"]})
+    df_b = pd.DataFrame({"feat": [1, 2]})
+
+    result = auditor.compare_schemas(df_a, df_b)
+    assert "feat" in result["diff_value_cols"]
+
+
+def test_compare_schemas_full_coverage():
+    """Cobre as linhas de comparação de médias e tratamento de NaNs (Linhas 42-45)."""
+    auditor = DataAuditor()
+
+    # Colunas com 3 linhas para todos
+    df_a = pd.DataFrame(
+        {
+            "v1": [1.0, 2.0, 3.0],
+            "v2": [np.nan, np.nan, np.nan],
+            "v3": [10.0, 20.0, 30.0],
+            "only_a": [1, 1, 1],
+        }
+    )
+
+    df_b = pd.DataFrame(
+        {
+            "v1": [1.0, 2.0, 3.0],
+            "v2": [np.nan, np.nan, np.nan],  # Ambas NaN -> cai no continue
+            "v3": [100.0, 200.0, 300.0],  # Médias diferentes
+            "only_b": [2, 2, 2],
+        }
+    )
+
+    result = auditor.compare_schemas(df_a, df_b)
+
+    assert "v3" in result["diff_value_cols"]
+    assert "v2" not in result["diff_value_cols"]
+    assert "only_a" in result["only_in_a"]
+    assert "only_b" in result["only_in_b"]
+
+
+def test_get_summary_fixed_assertions():
+    """Cobre os caminhos do get_summary usando pd.isna() para validação de NaNs."""
+    auditor = DataAuditor()
+
+    size = 20
+    df = pd.DataFrame(
+        {
+            "cat_low": ["A", "B", "C"] + ["A"] * (size - 3),
+            "cat_high": [str(i) for i in range(size)],
+            "num_val": [float(i) for i in range(size - 1)] + [np.nan],
+            "bool_val": [True, False] * (size // 2),
+            "empty_col": [np.nan] * size,
+        }
+    )
+
+    summary = auditor.get_summary(df)
+
+    # Assertions Corretas
+    assert summary.loc["cat_low", "unique_examples"] == "A, B, C"
+    assert summary.loc["cat_high", "unique_examples"] == "Too many values..."
+
+    # Verificação de valores numéricos
+    assert not pd.isna(summary.loc["num_val", "min"])
+
+    # Verificação de NaNs (Onde o 'is np.nan' falhou)
+    assert pd.isna(summary.loc["cat_low", "min"])
+    assert pd.isna(summary.loc["empty_col", "top_class"])
+    assert pd.isna(summary.loc["bool_val", "min"])  # Validando que bool não é considerado numérico
