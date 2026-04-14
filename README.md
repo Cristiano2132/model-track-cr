@@ -43,7 +43,57 @@ A typical modeling flow using this library follows these steps:
 
 Each step is supported by a dedicated module that integrates naturally with the others.
 
+Perfect! Since you are working on a professional toolkit and aiming for a "market standard" documentation, having the **README.md** in English is the right move—especially if you plan to showcase this on GitHub.
+
+Here is the translated and refined section for your documentation. I’ve adjusted the Mermaid labels to English as well to maintain consistency.
+
 ---
+
+## 🏗️ Project Architecture
+
+`model-track-cr` follows a modular structure based on transformers compatible with the Scikit-Learn ecosystem. This ensures seamless integration into standard data science pipelines.
+
+```mermaid
+classDiagram
+    namespace model_track_base {
+        class BaseTransformer {
+            <<abstract>>
+            +fit(df, target) *
+            +transform(df) *
+        }
+    }
+
+    namespace woe {
+        class WoeCalculator {
+            +mapping_: dict
+            +fit(df, target, columns)
+            +transform(df, columns)
+        }
+        class WoeStability {
+            +date_col: str
+            +calculate_stability_matrix(df, feature_col, target_col)
+            +generate_view(matrix, ax, title)
+        }
+        class CategoryMapper {
+            +mapping_dict_: dict
+            +auto_group(matrix, min_groups, is_ordered)
+        }
+    }
+
+    BaseTransformer <|-- WoeCalculator
+    WoeStability *-- WoeCalculator : composes (self.calc)
+    WoeStability ..> CategoryMapper : provides data for
+```
+
+### Key Components
+
+* **BaseTransformer**: An abstract base class that enforces the `fit`/`transform` contract, ensuring compatibility with Scikit-Learn pipelines.
+* **WoeCalculator**: Handles the Weight of Evidence (WoE) logic with Laplace Smoothing, essential for credit risk scorecards.
+* **WoeStability**: Orchestrates temporal stability analysis, generating WoE matrices across different time periods (safiras).
+* **CategoryMapper**: An optimized grouping engine that uses exhaustive search to minimize WoE inversions and maintain monotonic risk relationships.
+
+---
+
 
 ## 🧩 Core Modules Overview
 
