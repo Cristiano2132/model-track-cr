@@ -138,3 +138,63 @@ def test__is_numeric_from_mapper():
     assert mapper._is_numeric("12.3") is True
     assert mapper._is_numeric("N/A") is False
     assert mapper._is_numeric("abc") is False
+
+
+# n<min_group = 2 categs = 1 -> deve retornar a categoria original sem agrupamento
+def test_auto_group_min_groups_exceeds_categories():
+    matrix = pd.DataFrame({"C1": [1.0, 1.0]}, index=["safra1", "safra2"])
+    mapper = CategoryMapper()
+    suggested_map = mapper.auto_group(matrix, min_groups=2)
+    assert suggested_map["C1"] == "C1"
+
+
+def test_format_num_integer_and_float():
+    mapper = CategoryMapper()
+    assert mapper._format_num("10.0") == "10"
+    assert mapper._format_num("10.5") == "10.5"
+
+
+def test_auto_group_with_non_convertible_numeric():
+    matrix = pd.DataFrame(
+        {
+            "1": [1, 1],
+            "x": [2, 2],  # cannot convert to float
+        },
+        index=["s1", "s2"],
+    )
+
+    mapper = CategoryMapper()
+    result = mapper.auto_group(matrix, min_groups=1, is_ordered=True)
+
+    assert "x" in result
+
+
+def test_auto_group_with_na_category():
+    matrix = pd.DataFrame(
+        {
+            "1": [1.0, 1.0],
+            "N/A": [1.0, 1.0],
+        },
+        index=["s1", "s2"],
+    )
+
+    mapper = CategoryMapper()
+    result = mapper.auto_group(matrix, min_groups=1, is_ordered=True)
+
+    # Should append "ou N/A"
+    assert any("N/A" in v for v in result.values())
+
+
+def test_auto_group_mixed_numeric_and_string():
+    matrix = pd.DataFrame(
+        {
+            "1": [1, 1],
+            "A": [2, 2],
+        },
+        index=["s1", "s2"],
+    )
+
+    mapper = CategoryMapper()
+    result = mapper.auto_group(matrix, min_groups=1, is_ordered=True)
+
+    assert "A" in result
