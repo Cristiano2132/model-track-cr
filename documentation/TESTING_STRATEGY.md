@@ -1,5 +1,7 @@
 # Testing Strategy and Statistical Validation (v0.5.0)
 
+*Read this in other languages: [English](TESTING_STRATEGY.md), [Português](TESTING_STRATEGY.pt-br.md)*
+
 ## 1. Testing Philosophy
 The `model_track_cr` project adopts a **"Defense in Depth"** approach. We do not merely validate whether the code "runs without crashing"—we rigorously ensure that the statistical output is mathematically consistent, robust to noisy data, and computationally efficient.
 

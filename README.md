@@ -1,5 +1,7 @@
 # Model Track CR
 
+*Read this in other languages: [English](README.md), [Português](README.pt-br.md)*
+
 **model-track-cr** is a Python library designed to **structure, standardize, and operationalize the full statistical and machine learning modeling workflow**, with a strong focus on **credit, risk, and supervised modeling use cases**.
 
 Rather than offering isolated utilities, the library provides a **cohesive set of tools** that cover the most critical stages of real-world modeling:
