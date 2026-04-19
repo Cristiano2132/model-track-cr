@@ -6,6 +6,30 @@ class DataOptimizer:
     """Otimizador de memória para DataFrames de larga escala."""
 
     @staticmethod
+    def _downcast_numeric(series: pd.Series) -> pd.Series:
+        """Aplica downcast no tipo da Series se possível para economizar memória."""
+        col_type = series.dtype
+
+        if col_type == "object" or isinstance(col_type, pd.CategoricalDtype):
+            return series.astype("category")
+
+        c_min = series.min()
+        c_max = series.max()
+
+        if str(col_type).startswith("int"):
+            if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+                return series.astype(np.int8)
+            if c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+                return series.astype(np.int16)
+            if c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+                return series.astype(np.int32)
+            return series.astype(np.int64)
+
+        if c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
+            return series.astype(np.float32)
+        return series.astype(np.float64)
+
+    @staticmethod
     def reduce_mem_usage(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
         """
         Reduz tipos numéricos para economizar RAM e reporta o ganho.
@@ -16,28 +40,7 @@ class DataOptimizer:
         start_mem = df.memory_usage().sum() / 1024**2
 
         for col in df.columns:
-            col_type = df[col].dtype
-
-            if col_type != "object" and not isinstance(col_type, pd.CategoricalDtype):
-                c_min = df[col].min()
-                c_max = df[col].max()
-
-                if str(col_type)[:3] == "int":
-                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                        df[col] = df[col].astype(np.int8)
-                    elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-                        df[col] = df[col].astype(np.int16)
-                    elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-                        df[col] = df[col].astype(np.int32)
-                    else:
-                        df[col] = df[col].astype(np.int64)
-                else:
-                    if c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                        df[col] = df[col].astype(np.float32)
-                    else:
-                        df[col] = df[col].astype(np.float64)
-            else:
-                df[col] = df[col].astype("category")
+            df[col] = DataOptimizer._downcast_numeric(df[col])
 
         end_mem = df.memory_usage().sum() / 1024**2
 

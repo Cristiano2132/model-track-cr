@@ -23,7 +23,7 @@ def compute_iv(df: pd.DataFrame, feature: str, target: str) -> float:
 
 def compute_cramers_v(df: pd.DataFrame, f1: str, f2: str) -> float:
     """Calcula a correlação categórica de Cramer's V com correção de viés."""
-    obs = pd.crosstab(df[f1], df[f2]).values
+    obs = pd.crosstab(df[f1], df[f2]).to_numpy()
     if obs.size == 0 or obs.sum() == 0:
         return 0.0
 
