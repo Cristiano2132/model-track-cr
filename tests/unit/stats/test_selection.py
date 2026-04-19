@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pandas as pd
 
 from model_track.stats.selection import StatisticalSelector
@@ -70,3 +72,33 @@ def test_statistical_selector_full_flow():
     assert "feature_ok" in df_transformed.columns
     assert "target" in df_transformed.columns
     assert "feature_ruim" not in df_transformed.columns
+
+
+def test_statistical_selector_transitive_drop():
+    """Cobre a linha onde f2 já está em to_drop_corr (f2 já descartado por um f1 anterior)."""
+    df = pd.DataFrame(
+        {
+            "target": [0, 1] * 20,
+            "A": [0, 1] * 20,
+            "B": [0, 1] * 20,
+            "C": [0, 1] * 20,
+        }
+    )
+
+    selector = StatisticalSelector(iv_threshold=0.01, cramers_threshold=0.80)
+
+    # Vamos forçar: IV de A = 0.5, B = 0.4, C = 0.3
+    # E Cramer's V(A, C) = 0.9, os demais 0.1.
+    def mock_iv(df, col, target):
+        return {"A": 0.5, "B": 0.4, "C": 0.3}[col]
+
+    def mock_cramers(df, f1, f2):
+        if {f1, f2} == {"A", "C"}:
+            return 0.9
+        return 0.1
+
+    with patch("model_track.stats.selection.compute_iv", side_effect=mock_iv):
+        with patch("model_track.stats.selection.compute_cramers_v", side_effect=mock_cramers):
+            selector.fit(df, target="target", features=["A", "B", "C"])
+
+    assert "C" in selector.dropped_features_

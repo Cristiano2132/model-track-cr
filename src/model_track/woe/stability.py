@@ -90,6 +90,23 @@ class CategoryMapper:
         strs.sort()
         return [x[1] for x in nums] + strs + nas
 
+    def _check_inversion(
+        self, a_global: float, b_global: float, a_row: float, b_row: float
+    ) -> bool:
+        if a_global < b_global - 1e-5:
+            return bool(a_row >= b_row)
+        if a_global > b_global + 1e-5:
+            return bool(a_row <= b_row)
+        return bool(abs(a_row - b_row) > 1e-5)
+
+    def _count_row_inversions(self, row: Any, global_woes: list[float], k: int) -> int:
+        inversions = 0
+        for a in range(k):
+            for b in range(a + 1, k):
+                if self._check_inversion(global_woes[a], global_woes[b], row[a], row[b]):
+                    inversions += 1
+        return inversions
+
     def _score_partition(
         self,
         partition: list[list[str]],
@@ -103,7 +120,7 @@ class CategoryMapper:
         grouped_safra_woes = []
 
         for group in partition:
-            group_safra_woe = stability_matrix[group].mean(axis=1).values
+            group_safra_woe = stability_matrix[group].mean(axis=1).to_numpy()
             grouped_safra_woes.append(group_safra_woe)
 
             group_global = global_woe[group].mean()
@@ -115,19 +132,46 @@ class CategoryMapper:
         safra_woes = np.array(grouped_safra_woes).T
 
         for row in safra_woes:
-            for a in range(k):
-                for b in range(a + 1, k):
-                    if grouped_global_woes[a] < grouped_global_woes[b] - 1e-5:
-                        if row[a] >= row[b]:
-                            inversions += 1
-                    elif grouped_global_woes[a] > grouped_global_woes[b] + 1e-5:
-                        if row[a] <= row[b]:
-                            inversions += 1
-                    else:
-                        if abs(row[a] - row[b]) > 1e-5:
-                            inversions += 1
+            inversions += self._count_row_inversions(row, grouped_global_woes, k)
 
         return (inversions, round(sse, 5), k)
+
+    def _format_numeric_range_name(
+        self, group_sorted_num: list[str], numeric_cats_orig: list[str], has_na: bool
+    ) -> str | None:
+        start_idx = numeric_cats_orig.index(group_sorted_num[0])
+        expected_slice = numeric_cats_orig[start_idx : start_idx + len(group_sorted_num)]
+        if expected_slice != group_sorted_num:
+            return None
+
+        min_val = self._format_num(group_sorted_num[0])
+        max_val = self._format_num(group_sorted_num[-1])
+
+        if start_idx == 0 and (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
+            name = "Todos"
+        elif start_idx == 0:
+            name = f"<={max_val}"
+        elif (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
+            name = f">={min_val}"
+        else:
+            name = f"{min_val} a {max_val}" if min_val != max_val else min_val
+
+        return name + " ou N/A" if has_na else name
+
+    def _name_group(
+        self, group: list[str], is_all_numeric: bool, numeric_cats_orig: list[str]
+    ) -> str:
+        has_na = any(c in ["N/A", "nan"] for c in group)
+        clean_cats = [c for c in group if c not in ["N/A", "nan"]]
+        default_name = " ou ".join([str(c) for c in group])
+
+        if not is_all_numeric or not clean_cats:
+            return default_name
+
+        group_sorted_num = sorted(clean_cats, key=float)
+        range_name = self._format_numeric_range_name(group_sorted_num, numeric_cats_orig, has_na)
+
+        return range_name if range_name else default_name
 
     def _generate_intelligent_names(
         self, best_partition: list[list[str]] | None, categories: list[str]
@@ -139,38 +183,7 @@ class CategoryMapper:
 
         suggestion_map = {}
         for group in best_partition or []:
-            has_na = any(c in ["N/A", "nan"] for c in group)
-            clean_cats = [c for c in group if c not in ["N/A", "nan"]]
-
-            name = " ou ".join([str(c) for c in group])
-
-            if is_all_numeric and len(clean_cats) > 0:
-                group_sorted_num = sorted(clean_cats, key=float)
-                try:
-                    start_idx = numeric_cats_orig.index(group_sorted_num[0])
-                    if (
-                        numeric_cats_orig[start_idx : start_idx + len(group_sorted_num)]
-                        == group_sorted_num
-                    ):
-                        min_val = self._format_num(group_sorted_num[0])
-                        max_val = self._format_num(group_sorted_num[-1])
-
-                        if start_idx == 0 and (start_idx + len(group_sorted_num)) == len(
-                            numeric_cats_orig
-                        ):
-                            name = "Todos"
-                        elif start_idx == 0:
-                            name = f"<={max_val}"
-                        elif (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
-                            name = f">={min_val}"
-                        else:
-                            name = f"{min_val} a {max_val}" if min_val != max_val else min_val
-
-                        if has_na:
-                            name += " ou N/A"
-                except ValueError:
-                    pass
-
+            name = self._name_group(group, is_all_numeric, numeric_cats_orig)
             for cat in group:
                 suggestion_map[cat] = name
 
