@@ -1,10 +1,12 @@
 import os
+from datetime import datetime
 
 import requests
 
 # =========================
 # CONFIG
 # =========================
+
 SONAR_TOKEN = os.getenv("SONAR_TOKEN")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
@@ -15,11 +17,32 @@ GITHUB_REPO = "Cristiano2132/model-track-cr"
 SONAR_URL = "https://sonarcloud.io/api/issues/search"
 GITHUB_URL = f"https://api.github.com/repos/{GITHUB_REPO}/issues"
 
+EXPORT_FILE = "sonar_issues.md"
+
+SONAR_URL = "https://sonarcloud.io/api/issues/search"
+SONAR_AUTH_URL = "https://sonarcloud.io/api/authentication/validate"
+
+GITHUB_URL = f"https://api.github.com/repos/{GITHUB_REPO}/issues"
+
 sonar_auth = (SONAR_TOKEN, "")
 github_headers = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
     "Accept": "application/vnd.github+json",
 }
+
+
+# =========================
+# CHECK SONAR CONNECTION
+# =========================
+def check_sonar_connection():
+    print("🔐 Checking SonarCloud connection...")
+
+    response = requests.get(SONAR_AUTH_URL, auth=sonar_auth)
+
+    if response.status_code != 200 or not response.json().get("valid"):
+        raise Exception("❌ SonarCloud authentication failed")
+
+    print("✅ SonarCloud authentication successful")
 
 
 # =========================
@@ -50,6 +73,39 @@ def get_all_issues():
         page += 1
 
     return issues
+
+
+# =========================
+# EXPORT TO MARKDOWN
+# =========================
+def export_issues_to_markdown(issues):
+    print(f"📝 Exporting issues to {EXPORT_FILE}...")
+
+    with open(EXPORT_FILE, "w", encoding="utf-8") as f:
+        f.write("# SonarCloud Issues Export\n\n")
+        f.write(f"Project: `{SONAR_PROJECT_KEY}`\n")
+        f.write(f"Generated at: {datetime.utcnow()} UTC\n\n")
+        f.write(f"Total issues: **{len(issues)}**\n\n---\n\n")
+
+        for issue in issues:
+            f.write(f"## [{issue['severity']}] {issue['message']}\n\n")
+
+            f.write(f"- **Type:** {issue['type']}\n")
+            f.write(f"- **Rule:** {issue['rule']}\n")
+            f.write(f"- **File:** `{issue['component']}`\n")
+            f.write(f"- **Line:** {issue.get('line', 'N/A')}\n")
+            f.write(f"- **Effort:** {issue.get('effort', 'N/A')}\n")
+
+            if issue.get("tags"):
+                f.write(f"- **Tags:** {', '.join(issue['tags'])}\n")
+
+            f.write(
+                f"- **Link:** https://sonarcloud.io/project/issues?id={SONAR_PROJECT_KEY}&open={issue['key']}\n\n"
+            )
+
+            f.write("---\n\n")
+
+    print("✅ Export completed")
 
 
 # =========================
@@ -87,7 +143,7 @@ def build_title(issue):
 
 
 # =========================
-# BUILD BODY (PROFESSIONAL)
+# BUILD BODY
 # =========================
 def build_body(issue):
     return f"""
@@ -133,12 +189,7 @@ _This issue was automatically created from SonarCloud._
 # LABELS
 # =========================
 def build_labels(issue):
-    labels = ["sonarcloud"]
-
-    labels.append(issue["severity"].lower())
-    labels.append(issue["type"].lower())
-
-    return labels
+    return ["sonarcloud", issue["severity"].lower(), issue["type"].lower()]
 
 
 # =========================
@@ -160,24 +211,28 @@ def create_issue(title, body, labels):
 # MAIN
 # =========================
 def main():
+    check_sonar_connection()
+
     print("🔍 Fetching SonarCloud issues...")
     issues = get_all_issues()
 
     print(f"Total issues fetched: {len(issues)}")
 
-    existing_titles = get_existing_titles()
+    export_issues_to_markdown(issues)
 
-    for issue in issues:
-        title = build_title(issue)
+    # existing_titles = get_existing_titles()
 
-        if title in existing_titles:
-            print(f"⏭️ Skipping: {title}")
-            continue
+    # for issue in issues:
+    #     title = build_title(issue)
 
-        body = build_body(issue)
-        labels = build_labels(issue)
+    #     if title in existing_titles:
+    #         print(f"⏭️ Skipping: {title}")
+    #         continue
 
-        create_issue(title, body, labels)
+    #     body = build_body(issue)
+    #     labels = build_labels(issue)
+
+    #     create_issue(title, body, labels)
 
 
 if __name__ == "__main__":
