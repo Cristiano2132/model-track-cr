@@ -43,9 +43,6 @@ A typical modeling flow using this library follows these steps:
 
 Each step is supported by a dedicated module that integrates naturally with the others.
 
-Perfect! Since you are working on a professional toolkit and aiming for a "market standard" documentation, having the **README.md** in English is the right move—especially if you plan to showcase this on GitHub.
-
-Here is the translated and refined section for your documentation. I’ve adjusted the Mermaid labels to English as well to maintain consistency.
 
 ---
 
@@ -226,7 +223,7 @@ poetry install
 ```
 ---
 
-🧪 Testing & Code Quality
+## 🧪 Testing & Code Quality
 
 Run tests: `make test`
 
@@ -234,8 +231,9 @@ Run tests with coverage: `make cov`
 
 HTML coverage report: `htmlcov/index.html`
 
-The project follows strict Test-Driven Development (TDD).
-Every new feature must be accompanied by tests.
+The project follows strict Test-Driven Development (TDD) and is backed by a robust **Testing Pyramid Strategy**. Every new feature must be accompanied by automated tests.
+
+📘 For an in-depth look at our testing tiers (Unit, Component, Integration, API/E2E), please refer to the [Testing Strategy Guide](documentation/TESTING_STRATEGY.md).
 
 ---
 
