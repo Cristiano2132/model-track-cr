@@ -139,27 +139,24 @@ class CategoryMapper:
     def _format_numeric_range_name(
         self, group_sorted_num: list[str], numeric_cats_orig: list[str], has_na: bool
     ) -> str | None:
-        try:
-            start_idx = numeric_cats_orig.index(group_sorted_num[0])
-            expected_slice = numeric_cats_orig[start_idx : start_idx + len(group_sorted_num)]
-            if expected_slice != group_sorted_num:
-                return None
-
-            min_val = self._format_num(group_sorted_num[0])
-            max_val = self._format_num(group_sorted_num[-1])
-
-            if start_idx == 0 and (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
-                name = "Todos"
-            elif start_idx == 0:
-                name = f"<={max_val}"
-            elif (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
-                name = f">={min_val}"
-            else:
-                name = f"{min_val} a {max_val}" if min_val != max_val else min_val
-
-            return name + " ou N/A" if has_na else name
-        except ValueError:
+        start_idx = numeric_cats_orig.index(group_sorted_num[0])
+        expected_slice = numeric_cats_orig[start_idx : start_idx + len(group_sorted_num)]
+        if expected_slice != group_sorted_num:
             return None
+
+        min_val = self._format_num(group_sorted_num[0])
+        max_val = self._format_num(group_sorted_num[-1])
+
+        if start_idx == 0 and (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
+            name = "Todos"
+        elif start_idx == 0:
+            name = f"<={max_val}"
+        elif (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
+            name = f">={min_val}"
+        else:
+            name = f"{min_val} a {max_val}" if min_val != max_val else min_val
+
+        return name + " ou N/A" if has_na else name
 
     def _name_group(
         self, group: list[str], is_all_numeric: bool, numeric_cats_orig: list[str]

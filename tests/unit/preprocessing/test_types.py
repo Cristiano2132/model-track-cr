@@ -66,3 +66,16 @@ def test_type_detector_id_like_and_datetime_native():
 
     assert "id_masked" in types["id_like"]
     assert "dt_native" in types["datetime"]
+
+
+def test_type_detector_fallback():
+    """Cobre o retorno None para tipos desconhecidos como timedelta."""
+    size = 10
+    df = pd.DataFrame({"time_diff": pd.to_timedelta([f"{i} days" for i in range(size)])})
+
+    detector = TypeDetector()
+    types = detector.detect(df)
+
+    # A coluna não entra em nenhuma lista
+    for cat_list in types.values():
+        assert "time_diff" not in cat_list
