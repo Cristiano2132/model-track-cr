@@ -8,29 +8,7 @@ This document outlines the testing architecture for the `model-track-cr` project
 
 Our testing strategy follows the classic pyramid model, adapted for a machine learning library context. The foundation consists of fast, highly isolated unit tests, building up to slower, more integrated, and closer-to-user workflows at the top.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f4f4f4'}}}%%
-flowchart TD
-    subgraph Pyramid [model-track-cr Testing Pyramid]
-        direction BT
-        L1(Unit Tests<br><small><i>100% Coverage, High Isolation, Fast</i></small>)
-        L2(Component Tests<br><small><i>Module Interactions</i></small>)
-        L3(Integration Tests<br><small><i>Pandas/Sklearn Boundaries</i></small>)
-        L4(E2E / API Tests<br><small><i>Jupyter Notebook Workflows</i></small>)
-        L5(UI / Visual Tests<br><small><i>Manual Plot Validation</i></small>)
-        
-        L1 --> L2
-        L2 --> L3
-        L3 --> L4
-        L4 --> L5
-    end
-
-    style L1 fill:#e67e22,stroke:#d35400,stroke-width:2px,color:#fff
-    style L2 fill:#f39c12,stroke:#e67e22,stroke-width:2px,color:#fff
-    style L3 fill:#f1c40f,stroke:#f39c12,stroke-width:2px,color:#333
-    style L4 fill:#1abc9c,stroke:#16a085,stroke-width:2px,color:#fff
-    style L5 fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff
-```
+![Testing Pyramid](images/pyramid.png)
 
 > **Note**: As you move up the pyramid, tests become more integrated, slower to run, and closer to real-world usage. As you move down, tests are faster, highly isolated, and pinpoint exact logic failures.
 
@@ -73,7 +51,7 @@ Integration tests validate the boundaries between `model-track-cr` and third-par
   - Ensure Pandas `DataFrameGroupBy` warnings or memory optimizations do not break downstream logic.
 - **Execution**: Can be run against synthetic, mid-sized datasets.
 
-## 🚀 4. E2E / API Tests (Workflow Automation)
+## 🚀 4. API Tests (Workflow Automation)
 **Current Status:** Planned
 
 End-to-End tests simulate the exact journey of a Data Scientist using the library.
@@ -95,7 +73,7 @@ flowchart LR
     style F fill:#2ecc71,color:#fff
 ```
 
-## 👁️ 5. UI / Visual & Manual Tests
+## 👁️ 5. UI Tests (Visual Render Validation)
 **Current Status:** Ad-hoc / Manual
 
 While we are a backend library, we provide critical visualizations (e.g., `ws.generate_view`). 
@@ -106,9 +84,19 @@ While we are a backend library, we provide critical visualizations (e.g., `ws.ge
 
 ---
 
+## ☁️ 6. Manual Tests
+**Current Status:** Ad-hoc / Notebook validation
+
+At the very top of the pyramid sits manual testing. These are exploratory, slow, and completely integrated workflows.
+
+- **Scope**: Data scientists manually running notebooks, inspecting dataframes, and verifying that the plots "make sense" in a real-world analysis (like EDA).
+- **Goal**: Catch edge cases that automated tests missed or validate business logic that is hard to encode programmatically.
+
+---
+
 ## 🛠️ Implementation Roadmap
 
 Now that the pyramid is defined and our foundation (Unit Tests) is operating at **100% coverage**, our technical roadmap for QA involves:
 1. Identifying critical paths for **Component Tests**.
 2. Adding a Scikit-Learn pipeline **Integration Test** suite.
-3. Setting up CI to run the `notebooks/` as **E2E Tests**.
+3. Setting up CI to run the `notebooks/` as **API Tests**.
