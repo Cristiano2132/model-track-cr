@@ -117,3 +117,5 @@ __pycache__/
 htmlcov/
 github_project/
 exemplos/data/
+
+.cloude/
