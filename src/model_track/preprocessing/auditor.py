@@ -47,51 +47,48 @@ class DataAuditor:
             "diff_value_cols": diff_value_cols,
         }
 
+    def _get_column_stats(self, col: str, series: pd.Series) -> dict[str, Any]:
+        """Calcula estatísticas para uma única coluna."""
+        n_unique = int(series.nunique())
+
+        # Exemplos determinísticos
+        if n_unique <= 10:
+            unique_vals = sorted([str(x) for x in series.dropna().unique()])
+            examples = ", ".join(unique_vals)
+        else:
+            examples = "Too many values..."
+
+        # Estatísticas de Top Class
+        mode_result = series.mode()
+        top_val = mode_result.iloc[0] if not mode_result.empty else np.nan
+
+        total_rows = len(series)
+        top_pct = (
+            (series.value_counts().max() / total_rows) * 100
+            if total_rows > 0 and n_unique > 0
+            else 0.0
+        )
+
+        # CORREÇÃO: Usar pd.api.types para evitar erro com CategoricalDtype
+        is_numeric = pd.api.types.is_numeric_dtype(series.dtype) and not pd.api.types.is_bool_dtype(
+            series.dtype
+        )
+
+        stats = {
+            "column_name": col,
+            "dtype": str(series.dtype),
+            "null_count": int(series.isnull().sum()),
+            "pct_na": float((series.isnull().sum() / total_rows) * 100) if total_rows > 0 else 0.0,
+            "n_distinct": n_unique,
+            "min": series.min() if is_numeric else np.nan,
+            "max": series.max() if is_numeric else np.nan,
+            "top_class": top_val,
+            "top_class_pct": float(top_pct),
+            "unique_examples": examples,
+        }
+        return stats
+
     def get_summary(self, df: pd.DataFrame) -> pd.DataFrame:
         """Gera sumário estatístico exaustivo das colunas."""
-        summary_data = []
-
-        for col in df.columns:
-            series = df[col]
-            n_unique = int(series.nunique())
-
-            # Exemplos determinísticos
-            if n_unique <= 10:
-                unique_vals = sorted([str(x) for x in series.dropna().unique()])
-                examples = ", ".join(unique_vals)
-            else:
-                examples = "Too many values..."
-
-            # Estatísticas de Top Class
-            mode_result = series.mode()
-            top_val = mode_result.iloc[0] if not mode_result.empty else np.nan
-
-            total_rows = len(series)
-            top_pct = (
-                (series.value_counts().max() / total_rows) * 100
-                if total_rows > 0 and n_unique > 0
-                else 0.0
-            )
-
-            # CORREÇÃO: Usar pd.api.types para evitar erro com CategoricalDtype
-            is_numeric = pd.api.types.is_numeric_dtype(
-                series.dtype
-            ) and not pd.api.types.is_bool_dtype(series.dtype)
-
-            stats = {
-                "column_name": col,
-                "dtype": str(series.dtype),
-                "null_count": int(series.isnull().sum()),
-                "pct_na": float((series.isnull().sum() / total_rows) * 100)
-                if total_rows > 0
-                else 0.0,
-                "n_distinct": n_unique,
-                "min": series.min() if is_numeric else np.nan,
-                "max": series.max() if is_numeric else np.nan,
-                "top_class": top_val,
-                "top_class_pct": float(top_pct),
-                "unique_examples": examples,
-            }
-            summary_data.append(stats)
-
+        summary_data = [self._get_column_stats(col, df[col]) for col in df.columns]
         return pd.DataFrame(summary_data).set_index("column_name")

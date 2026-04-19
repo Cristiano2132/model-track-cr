@@ -16,7 +16,7 @@ class TreeBinner(BaseTransformer):
         self.bins: list[float] | None = None
         self._is_fitted = False
 
-    def fit(self, df: pd.DataFrame, column: str, target: str) -> "TreeBinner":  # type: ignore[override]
+    def fit(self, df: pd.DataFrame, column: str = "", target: str = "") -> "TreeBinner":  # type: ignore[override]
         """Aprende os pontos de corte da árvore."""
         # Limpeza para o treino (a árvore não aceita NaNs nativamente)
         df_clean = df[[column, target]].dropna()
@@ -25,7 +25,10 @@ class TreeBinner(BaseTransformer):
         y = df_clean[target]
 
         tree = DecisionTreeClassifier(
-            max_depth=self.max_depth, min_samples_leaf=self.min_samples_leaf
+            max_depth=self.max_depth,
+            min_samples_leaf=self.min_samples_leaf,
+            random_state=42,
+            ccp_alpha=0.0,
         )
         tree.fit(x, y)
 
@@ -35,7 +38,7 @@ class TreeBinner(BaseTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, df: pd.DataFrame, column: str) -> pd.Series:  # type: ignore[override]
+    def transform(self, df: pd.DataFrame, column: str = "") -> pd.Series:
         """Aplica os bins aprendidos e trata valores nulos."""
         if not self._is_fitted:
             raise RuntimeError("O binner deve ser 'fitado' antes de transformar.")
