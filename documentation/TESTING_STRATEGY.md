@@ -1,102 +1,45 @@
-# Testing Strategy & Quality Standards
+# Testing Strategy and Statistical Validation (v0.5.0)
 
-This document outlines the testing architecture for the `model-track-cr` project. As a professional data science and modeling library, ensuring accuracy, reproducibility, and stability is paramount. We achieve this by adhering to a **Testing Pyramid** methodology.
+## 1. Testing Philosophy
+The `model_track_cr` project adopts a **"Defense in Depth"** approach. We do not merely validate whether the code "runs without crashing"—we rigorously ensure that the statistical output is mathematically consistent, robust to noisy data, and computationally efficient.
 
----
+<p align="center">
+  <img src="images/pyramid.png" alt="Testing Pyramid for Data Science" width="600">
+</p>
 
-## 📐 The Testing Pyramid
+*Our pyramid prioritizes a strong foundation of unit tests, reinforced by automated statistical validations and property-based assertions.*
 
-Our testing strategy follows the classic pyramid model, adapted for a machine learning library context. The foundation consists of fast, highly isolated unit tests, building up to slower, more integrated, and closer-to-user workflows at the top.
+## 2. Testing Structure (Mirror Strategy)
+To maintain scalability and a clear cognitive mapping, we adopt the **Mirror Strategy**, where the testing directories reflect the exact structure of `src/model_track`.
 
-![Testing Pyramid](images/pyramid.png)
+- **`tests/unit/`**: Black-box tests for individual functions and methods. Focused on line coverage and exception handling.
+- **`tests/statistical/`**: Property-Based Tests (PBT). Validates mathematical invariances using synthetic data generation.
+- **`tests/integration/`**: End-to-end workflow tests (e.g., from raw DataFrame ingestion to the final correlation report or scorecard).
+- **`tests/benchmarks/`**: Performance monitoring and algorithmic complexity (Big O) evaluations.
 
-> **Note**: As you move up the pyramid, tests become more integrated, slower to run, and closer to real-world usage. As you move down, tests are faster, highly isolated, and pinpoint exact logic failures.
+## 3. Property-Based Testing (PBT)
+We utilize the `Hypothesis` library to challenge our implementations with data structures and edge cases that a human would rarely consider encoding manually.
 
----
+### Generation Strategies:
+- **Extreme DataFrames:** Generating columns with 100% NaNs, constant values, and floating-point values near precision limits (e.g., `-1e6` to `1e6`).
+- **Type Robustness:** Testing mixtures of types (`float`, `int`, `category`) to ensure that classes (like `Analyzer` or `TypeDetector`) either fail gracefully or convert types correctly.
 
-## 🧱 1. Unit Tests (The Foundation)
-**Current Status:** Fully Implemented (100% Code Coverage)
+## 4. Invariance & Statistical Sanity
+Every implemented metric must pass strict sanity tests:
+- **Symmetry:** $Corr(X, Y) == Corr(Y, X)$.
+- **Mathematical Bounds:** Ensure that correlations are strictly within the $[-1, 1]$ interval, and metrics like PSI or KS are always $\ge 0$.
+- **Scale Invariance:** Multiplying a column by a constant should not alter the Pearson correlation coefficient or the Information Value (IV).
 
-Unit tests isolate individual functions and mathematical computations to ensure core logic is flawless. 
+## 5. Coverage and Quality
+- **Coverage Goal:** Minimum of 95% coverage across core modules (currently operating at **100%**).
+- **Error Handling:** Failure paths (e.g., arrays of mismatched shapes, zero variance columns) must be explicitly tested using `pytest.raises`.
 
-- **Scope**: Mathematical calculations (Laplace smoothing), threshold conditions, individual private methods (e.g., `_count_row_inversions`).
-- **Tooling**: `pytest` + `pytest-cov`.
-- **Execution**: Runs in milliseconds.
+## 6. Performance Benchmarking (Big O)
+To prevent performance regressions on large volumes of data:
+- **Baselines:** Execution time measurements for $N=10^3, 10^5, 10^6$ rows.
+- **Target Complexity:** Single-column operations should tend to $O(n)$. Correlation matrices and stability calculations must be optimized via NumPy/Pandas vectorization to avoid pure Python $O(n^2)$ bottlenecks.
 
-```mermaid
-sequenceDiagram
-    participant TestRunner
-    participant WoeCalculator
-    
-    TestRunner->>WoeCalculator: compute_mapping(df, 'target', 'feature')
-    WoeCalculator-->>TestRunner: returns WOE dict
-    TestRunner->>TestRunner: assert math.isclose(woe, expected)
-```
-
-## ⚙️ 2. Component Tests
-**Current Status:** Planned
-
-Component tests verify that multiple units within the same layer or namespace work together harmoniously without crossing external boundaries (like saving to disk or calling APIs).
-
-- **Scope**: Verifying if `WoeStability` correctly orchestrates `WoeCalculator` and `CategoryMapper` internally.
-- **Goal**: Ensure the "glue" code between internal classes works as expected before testing with massive external dataframes.
-
-## 🔗 3. Integration Tests
-**Current Status:** Planned
-
-Integration tests validate the boundaries between `model-track-cr` and third-party ecosystems (Scikit-Learn, Pandas).
-
-- **Scope**: 
-  - Ensure transformers (`fit`, `transform`) behave perfectly when injected into a `sklearn.pipeline.Pipeline`.
-  - Ensure Pandas `DataFrameGroupBy` warnings or memory optimizations do not break downstream logic.
-- **Execution**: Can be run against synthetic, mid-sized datasets.
-
-## 🚀 4. API Tests (Workflow Automation)
-**Current Status:** Planned
-
-End-to-End tests simulate the exact journey of a Data Scientist using the library.
-
-- **Scope**: Automated execution of reference Jupyter Notebooks (e.g., `ieee_fraud_eda_baseline.ipynb`).
-- **Goal**: Prevent breaking API changes. If a parameter name changes in the library, the notebook execution must fail in CI.
-- **Tooling**: `nbconvert` or `pytest-ipynb` to run notebooks headlessly.
-
-```mermaid
-flowchart LR
-    A[Trigger CI] --> B[Load IEEE Dataset]
-    B --> C[Run Notebook Headless]
-    C --> D{Did it throw exceptions?}
-    D -- Yes --> E[Fail Build]
-    D -- No --> F[Pass E2E Test]
-    
-    style A fill:#34495e,color:#fff
-    style E fill:#e74c3c,color:#fff
-    style F fill:#2ecc71,color:#fff
-```
-
-## 👁️ 5. UI Tests (Visual Render Validation)
-**Current Status:** Ad-hoc / Manual
-
-While we are a backend library, we provide critical visualizations (e.g., `ws.generate_view`). 
-
-- **Scope**: Ensuring plots and charts render correctly, have legends, and are visually clear.
-- **Goal**: Avoid visual regressions (e.g., colors disappearing, overlapping text).
-- **Future Tooling**: Image comparison testing via `pytest-mpl` (matplotlib testing) or manual peer-review checklists for PRs touching visual components.
-
----
-
-## ☁️ 6. Manual Tests
-**Current Status:** Ad-hoc / Notebook validation
-
-At the very top of the pyramid sits manual testing. These are exploratory, slow, and completely integrated workflows.
-
-- **Scope**: Data scientists manually running notebooks, inspecting dataframes, and verifying that the plots "make sense" in a real-world analysis (like EDA).
-- **Goal**: Catch edge cases that automated tests missed or validate business logic that is hard to encode programmatically.
-
----
-
-## 🛠️ Implementation Roadmap
-
-Now that the pyramid is defined and our foundation (Unit Tests) is operating at **100% coverage**, our technical roadmap for QA involves:
-1. Identifying critical paths for **Component Tests**.
-2. Adding a Scikit-Learn pipeline **Integration Test** suite.
-3. Setting up CI to run the `notebooks/` as **API Tests**.
+## 7. Compatibility Matrix
+Our CI/CD pipeline validates the library against:
+- **Python:** 3.10, 3.11, 3.12, 3.13.
+- **Pandas:** v1.x and v2.x (including support for the PyArrow backend).
