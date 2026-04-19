@@ -23,8 +23,11 @@ class StatisticalSelector(BaseTransformer):
         self.selected_features_: list[str] = []
         self.dropped_features_: list[str] = []
 
-    def fit(self, df: pd.DataFrame, target: str, features: list[str]) -> "StatisticalSelector":  # type: ignore[override]
+    def fit(  # type: ignore[override]
+        self, df: pd.DataFrame, target: str, features: list[str] | None = None
+    ) -> "StatisticalSelector":
         """Avalia as features e define quais sobreviverão."""
+        features = features or []
         df_sample = df
 
         # Amostragem estratificada para acelerar Cramer's V

@@ -22,7 +22,10 @@ class WoeCalculator(BaseTransformer):
 
         return np.log(perc_good / perc_bad).to_dict()  # type: ignore[no-any-return]
 
-    def fit(self, df: pd.DataFrame, target: str, columns: list[str]) -> "WoeCalculator":  # type: ignore[override]
+    def fit(  # type: ignore[override]
+        self, df: pd.DataFrame, target: str, columns: list[str] | None = None
+    ) -> "WoeCalculator":
+        columns = columns or []
         for col in columns:
             # Garante que os dados sejam tratados como string para o dicionário
             temp_series = df[col].astype(str).fillna("N/A")
@@ -33,10 +36,11 @@ class WoeCalculator(BaseTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:  # type: ignore[override]
+    def transform(self, df: pd.DataFrame, columns: list[str] | None = None) -> pd.DataFrame:
         if not self._is_fitted:
             raise RuntimeError("WoeCalculator precisa ser fitado antes do transform.")
 
+        columns = columns or []
         df_out = df.copy()
         for col in columns:
             if col in self.mapping_:
