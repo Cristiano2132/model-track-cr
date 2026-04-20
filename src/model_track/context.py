@@ -5,8 +5,8 @@ import joblib
 
 class ProjectContext:
     """
-    DTO (Data Transfer Object) que centraliza o estado da modelagem.
-    Permite salvar e carregar o progresso do projeto.
+    DTO (Data Transfer Object) that centralizes the modeling state.
+    Allows saving and loading project progress.
     """
 
     def __init__(self) -> None:
@@ -17,10 +17,23 @@ class ProjectContext:
         self.target: str | None = None
 
     def save(self, path: str) -> None:
-        """Persiste o contexto em um arquivo binário."""
+        """
+        Persist the context to a binary file.
+
+        Args:
+            path: Path to save the context file.
+        """
         joblib.dump(self, path)
 
     @classmethod
     def load(cls, path: str) -> "ProjectContext":
-        """Carrega um contexto do disco."""
+        """
+        Load a context from disk.
+
+        Args:
+            path: Path to the saved context file.
+
+        Returns:
+            ProjectContext: The loaded context instance.
+        """
         return joblib.load(path)  # type: ignore[no-any-return]

@@ -5,20 +5,46 @@ import pandas as pd
 
 class BaseTransformer(ABC):
     """
-    Interface base para todos os transformadores do model-track.
-    Define o contrato fit e transform para garantir modularidade.
+    Base interface for all model-track transformers.
+    Defines the fit and transform contract to ensure modularity.
     """
 
     @abstractmethod
     def fit(self, df: pd.DataFrame, target: str | None = None) -> "BaseTransformer":
-        """Treina o transformador."""
+        """
+        Train the transformer.
+
+        Args:
+            df: Input DataFrame to train on.
+            target: Target variable name for supervised transformers.
+
+        Returns:
+            BaseTransformer: The fitted transformer instance.
+        """
         pass
 
     @abstractmethod
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Aplica a transformação."""
+        """
+        Apply the transformation to the data.
+
+        Args:
+            df: Input DataFrame to transform.
+
+        Returns:
+            pd.DataFrame: The transformed DataFrame.
+        """
         pass
 
     def fit_transform(self, df: pd.DataFrame, target: str | None = None) -> pd.DataFrame:
-        """Atalho para executar o treinamento e a aplicação em sequência."""
+        """
+        Helper method to perform both fit and transform in sequence.
+
+        Args:
+            df: Input DataFrame.
+            target: Target variable name.
+
+        Returns:
+            pd.DataFrame: The transformed DataFrame.
+        """
         return self.fit(df, target).transform(df)

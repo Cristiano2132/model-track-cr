@@ -5,7 +5,7 @@ from model_track.preprocessing.encoders import OrdinalEncoder
 
 
 def test_ordinal_encoder_fit_transform():
-    """Valida o mapeamento e o tratamento de categorias não vistas (-1)."""
+    """Validate mapping and handling of unseen categories (-1)."""
     df_train = pd.DataFrame({"cat_col": ["A", "B", "A", None]})
     df_test = pd.DataFrame({"cat_col": ["B", "C", None]})
 
@@ -27,28 +27,28 @@ def test_ordinal_encoder_fit_transform():
 
 
 def test_ordinal_encoder_exceptions():
-    """Cobre as linhas 21, 34 e 36 (Validações de erro)."""
+    """Test error validations."""
     encoder = OrdinalEncoder()
     df = pd.DataFrame({"col1": ["A", "B"]})
 
-    # Linha 34: Erro se transformar antes do fit
-    with pytest.raises(RuntimeError, match="precisa ser fitado"):
+    # Error if transforming before fit
+    with pytest.raises(RuntimeError, match="must be fitted"):
         encoder.transform(df, columns=["col1"])
 
-    # Linha 21: Erro se columns for None no fit
-    with pytest.raises(ValueError, match="lista de colunas deve ser fornecida"):
+    # Error if columns is None in fit
+    with pytest.raises(ValueError, match="list of columns must be provided"):
         encoder.fit(df, columns=None)
 
-    # Faz o fit para testar a próxima exceção
+    # Fit to test the next exception
     encoder.fit(df, columns=["col1"])
 
-    # Linha 36: Erro se columns for None no transform
-    with pytest.raises(ValueError, match="lista de colunas deve ser fornecida"):
+    # Error if columns is None in transform
+    with pytest.raises(ValueError, match="list of columns must be provided"):
         encoder.transform(df, columns=None)
 
 
 def test_ordinal_encoder_column_not_in_mapping():
-    """Cobre a lógica defensiva se uma coluna pedida não foi fitada."""
+    """Test defensive logic when a requested column was not fitted."""
     df_fit = pd.DataFrame({"col1": ["A", "B"]})
     df_trans = pd.DataFrame({"col2": ["X", "Y"]})
 

@@ -6,8 +6,8 @@ from model_track.stats.metrics import compute_cramers_v, compute_iv
 
 class StatisticalSelector(BaseTransformer):
     """
-    Filtra features combinando Information Value (IV) e Correlação de Cramer's V.
-    Retém a feature de maior IV quando há alta correlação.
+    Filter features by combining Information Value (IV) and Cramer's V Correlation.
+    Retains the feature with the highest IV when high correlation is detected.
     """
 
     def __init__(
@@ -26,11 +26,21 @@ class StatisticalSelector(BaseTransformer):
     def fit(  # type: ignore[override]
         self, df: pd.DataFrame, target: str, features: list[str] | None = None
     ) -> "StatisticalSelector":
-        """Avalia as features e define quais sobreviverão."""
+        """
+        Evaluate features and define which ones will be kept.
+
+        Args:
+            df: Input DataFrame.
+            target: Target column name.
+            features: List of features to evaluate.
+
+        Returns:
+            StatisticalSelector: The fitted selector instance.
+        """
         features = features or []
         df_sample = df
 
-        # Amostragem estratificada para acelerar Cramer's V
+        # Stratified sampling to speed up Cramer's V
         if self.sample_size and len(df) > self.sample_size:
             frac = self.sample_size / len(df)
             df_sample = df.groupby(target, group_keys=False, observed=True).apply(
@@ -39,16 +49,16 @@ class StatisticalSelector(BaseTransformer):
 
         valid_features = [f for f in features if f in df_sample.columns]
 
-        # 1. Filtro de IV
+        # 1. IV Filter
         for col in valid_features:
             self.iv_results_[col] = compute_iv(df_sample, col, target)
 
         strong_features = [f for f, iv in self.iv_results_.items() if iv >= self.iv_threshold]
 
-        # 2. Ordena as features fortes pelo IV (A mais forte 'vence' no Cramer's V)
+        # 2. Sort strong features by IV (The strongest "wins" in Cramer's V)
         strong_features.sort(key=lambda x: self.iv_results_[x], reverse=True)
 
-        # 3. Filtro de Cramer's V
+        # 3. Cramer's V Filter
         to_drop_corr = set()
         df_sample_cat = df_sample[strong_features]
 
@@ -62,7 +72,7 @@ class StatisticalSelector(BaseTransformer):
 
                 v = compute_cramers_v(df_sample_cat, f1, f2)
                 if v > self.cramers_threshold:
-                    to_drop_corr.add(f2)  # Descarta a feature de menor IV
+                    to_drop_corr.add(f2)  # Discard the feature with lower IV
 
         self.selected_features_ = [f for f in strong_features if f not in to_drop_corr]
         self.dropped_features_ = [f for f in valid_features if f not in self.selected_features_]
@@ -70,7 +80,15 @@ class StatisticalSelector(BaseTransformer):
         return self
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Remove as features descartadas do DataFrame."""
+        """
+        Remove discarded features from the DataFrame.
+
+        Args:
+            df: Input DataFrame.
+
+        Returns:
+            pd.DataFrame: DataFrame with selected features only.
+        """
         return df.drop(
             columns=[f for f in self.dropped_features_ if f in df.columns], errors="ignore"
         )
