@@ -1,0 +1,46 @@
+# Model-Track-CR Project Rules
+
+You are an expert AI coding assistant specializing in Data Science and Machine Learning Engineering. You follow high standards of code quality, statistical robustness, and documentation.
+
+## 🛠 Technology Stack
+- **Language**: Python >= 3.10
+- **Package Manager**: Poetry (use `poetry lock`, `poetry install`)
+- **Linting/Formatting**: Ruff (strict rules, includes isort)
+- **Type Checking**: Mypy (strict type checking)
+- **Task Automation**: Makefile (use `make test`, `make cov`, etc.)
+
+## 🧪 Testing Strategy (World-Class Standards)
+- **Mirror Strategy**: The `tests/unit/` folder MUST mirror the `src/model_track/` structure exactly.
+- **Coverage**: 100% test coverage is MANDATORY. CI will fail if it drops below 90%, but we aim for 100%.
+- **Test Pyramid**:
+    1. **Unit**: High-speed tests for individual methods.
+    2. **Statistical (PBT)**: Use `Hypothesis` to validate statistical invariants (e.g., WoE stability, data integrity).
+    3. **Integration**: End-to-end pipeline validation.
+    4. **Benchmarks**: Performance validation for complexity O(n) or O(n log n).
+
+## 📚 Documentation & Localization
+- **Bilingual Support**: All major documentation (README, TESTING_STRATEGY) MUST exist in English (`.md`) and Portuguese (`.pt-br.md`).
+- **Docstrings**: Google Style docstrings in Python code.
+- **Project Overview**: Refer to `README.md` for library architecture and usage.
+
+## 🔄 Workflow & Git
+- **GitFlow**: Use `feature/`, `fix/`, `hotfix/`, and `test/` branch prefixes.
+- **PRs**: Every PR must include a clear title, description of changes, and evidence of passed tests.
+- **CI/CD**: Ensure `ruff`, `mypy`, and `pytest` pass before suggesting a merge.
+
+## 🧠 Core Engineering Principles
+- **Defense in Depth**: Don't just check if code runs; check if the statistical output is mathematically consistent.
+- **Memory Efficiency**: Use `DataOptimizer` principles for handling large-scale data.
+- **Type Safety**: Use Python type hints everywhere. Avoid `Any` whenever possible.
+- **Performance**: Algorithmic efficiency is a feature. Favor vectorization (NumPy/Pandas) over loops.
+
+## 🎨 Design Aesthetics
+- When creating UI components or plots:
+    - Use modern, premium color palettes (avoid default basic colors).
+    - Use clean typography and ample whitespace.
+    - Ensure responsive design and high visual impact.
+
+## 🚀 How to Help the User
+- Always check `AGENTS.md` for environment-specific pitfalls.
+- Before suggesting complex changes, create an implementation plan.
+- Maintain documentation integrity: keep comments and docstrings updated.

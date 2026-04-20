@@ -6,8 +6,7 @@ from model_track.base import BaseTransformer
 
 class TreeBinner(BaseTransformer):
     """
-    Binarizador supervisionado que utiliza árvores de decisão para
-    encontrar pontos de corte ótimos.
+    Supervised binner that uses decision trees to find optimal split points.
     """
 
     def __init__(self, max_depth: int = 3, min_samples_leaf: int = 100):
@@ -17,8 +16,18 @@ class TreeBinner(BaseTransformer):
         self._is_fitted = False
 
     def fit(self, df: pd.DataFrame, column: str = "", target: str = "") -> "TreeBinner":  # type: ignore[override]
-        """Aprende os pontos de corte da árvore."""
-        # Limpeza para o treino (a árvore não aceita NaNs nativamente)
+        """
+        Learn the split points using a decision tree.
+
+        Args:
+            df: Input DataFrame.
+            column: Name of the feature to be binned.
+            target: Name of the target variable.
+
+        Returns:
+            TreeBinner: The fitted instance.
+        """
+        # Cleanup for training (decision trees don't natively handle NaNs)
         df_clean = df[[column, target]].dropna()
 
         x = df_clean[[column]]
@@ -39,15 +48,24 @@ class TreeBinner(BaseTransformer):
         return self
 
     def transform(self, df: pd.DataFrame, column: str = "") -> pd.Series:
-        """Aplica os bins aprendidos e trata valores nulos."""
-        if not self._is_fitted:
-            raise RuntimeError("O binner deve ser 'fitado' antes de transformar.")
+        """
+        Apply the learned bins and handle null values.
 
-        # Adicionamos -inf e inf para cobrir todo o range (com fallback para lista vazia)
+        Args:
+            df: Input DataFrame.
+            column: Name of the feature to transform.
+
+        Returns:
+            pd.Series: The binned feature as strings.
+        """
+        if not self._is_fitted:
+            raise RuntimeError("The binner must be fitted before transforming.")
+
+        # We add -inf and inf to cover the entire range (with fallback for empty list)
         split_points = [-float("inf")] + (self.bins or []) + [float("inf")]
 
         # Gerar os labels/bins
         binned = pd.cut(df[column], bins=split_points, duplicates="drop")
 
-        # Converter para string e tratar nulos como 'N/A' conforme seu notebook
+        # Convert to string and treat nulls as 'N/A'
         return binned.astype(str).replace("nan", "N/A")

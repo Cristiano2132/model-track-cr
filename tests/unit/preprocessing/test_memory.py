@@ -5,7 +5,7 @@ from model_track.preprocessing.memory import DataOptimizer
 
 
 def test_reduce_mem_usage_full_int_coverage():
-    """Cobre todos os ramos de inteiros (int8, int16, int32, int64)."""
+    """Cover all integer branches (int8, int16, int32, int64)."""
     df = pd.DataFrame(
         {
             "i8": [10, 20],
@@ -25,7 +25,7 @@ def test_reduce_mem_usage_full_int_coverage():
 
 
 def test_reduce_mem_usage_float_coverage():
-    """Cobre os ramos de float (float32 e float64)."""
+    """Cover float branches (float32 and float64)."""
     df = pd.DataFrame(
         {
             "f32": [1.5, 2.5],
@@ -41,20 +41,20 @@ def test_reduce_mem_usage_float_coverage():
 
 
 def test_reduce_mem_usage_category_and_verbose(capsys):
-    """Cobre o ramo de 'object' -> 'category' e o print do verbose."""
+    """Cover 'object' -> 'category' branch and verbose print."""
     df = pd.DataFrame({"cat_col": ["A", "B", "A", "C"], "obj_col": ["text"] * 4})
 
     # Testa o verbose=True (Linhas 47-51)
     optimized = DataOptimizer.reduce_mem_usage(df, verbose=True)
     captured = capsys.readouterr()
 
-    assert "Memória Inicial:" in captured.out
+    assert "Initial Memory:" in captured.out
     assert optimized["cat_col"].dtype == "category"
     assert optimized["obj_col"].dtype == "category"
 
 
 def test_reduce_mem_usage_no_mutation():
-    """Garante imutabilidade (Linha 13)."""
+    """Ensure immutability."""
     df_original = pd.DataFrame({"a": [1, 2, 3]})
     _ = DataOptimizer.reduce_mem_usage(df_original)
 

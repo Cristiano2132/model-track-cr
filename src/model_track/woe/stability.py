@@ -9,7 +9,7 @@ from model_track.woe.calculator import WoeCalculator
 
 
 class WoeStability:
-    """Análise de estabilidade temporal do WoE."""
+    """Temporal stability analysis of Weight of Evidence (WoE)."""
 
     def __init__(self, date_col: str) -> None:
         self.date_col = date_col
@@ -18,6 +18,17 @@ class WoeStability:
     def calculate_stability_matrix(
         self, df: pd.DataFrame, feature_col: str, target_col: str
     ) -> pd.DataFrame:
+        """
+        Calculate the WoE matrix across different time periods.
+
+        Args:
+            df: Input DataFrame containing the date and feature columns.
+            feature_col: Feature column name to analyze.
+            target_col: Target column name.
+
+        Returns:
+            pd.DataFrame: A matrix where rows are time periods and columns are categories.
+        """
         df_temp = df.copy()
         df_temp[feature_col] = df_temp[feature_col].astype(str).fillna("N/A")
 
@@ -37,6 +48,17 @@ class WoeStability:
     def generate_view(
         self, matrix: pd.DataFrame, title: str = "WoE Stability", ax: Any | None = None
     ) -> Any:
+        """
+        Generate a line plot of WoE stability over time.
+
+        Args:
+            matrix: The stability matrix (output of calculate_stability_matrix).
+            title: Title for the plot.
+            ax: Matplotlib axes object (optional).
+
+        Returns:
+            Any: The axes object containing the plot.
+        """
         if ax is None:
             _, ax = plt.subplots(figsize=(10, 5))
 
@@ -51,8 +73,8 @@ class WoeStability:
 
 class CategoryMapper:
     """
-    Agrupador Otimizado de Scorecard com Função de Custo.
-    Usa busca exaustiva (força bruta) para minimizar cruzamentos de WoE temporal.
+    Optimized Scorecard Grouper with Cost Function.
+    Uses exhaustive search (brute force) to minimize temporal WoE crossings.
     """
 
     def __init__(self) -> None:
@@ -148,22 +170,22 @@ class CategoryMapper:
         max_val = self._format_num(group_sorted_num[-1])
 
         if start_idx == 0 and (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
-            name = "Todos"
+            name = "All"
         elif start_idx == 0:
             name = f"<={max_val}"
         elif (start_idx + len(group_sorted_num)) == len(numeric_cats_orig):
             name = f">={min_val}"
         else:
-            name = f"{min_val} a {max_val}" if min_val != max_val else min_val
+            name = f"{min_val} to {max_val}" if min_val != max_val else min_val
 
-        return name + " ou N/A" if has_na else name
+        return name + " or N/A" if has_na else name
 
     def _name_group(
         self, group: list[str], is_all_numeric: bool, numeric_cats_orig: list[str]
     ) -> str:
         has_na = any(c in ["N/A", "nan"] for c in group)
         clean_cats = [c for c in group if c not in ["N/A", "nan"]]
-        default_name = " ou ".join([str(c) for c in group])
+        default_name = " or ".join([str(c) for c in group])
 
         if not is_all_numeric or not clean_cats:
             return default_name
@@ -193,6 +215,17 @@ class CategoryMapper:
     def auto_group(
         self, stability_matrix: pd.DataFrame, min_groups: int = 2, is_ordered: bool = False
     ) -> dict[str, str]:
+        """
+        Find the best grouping of categories based on temporal stability.
+
+        Args:
+            stability_matrix: Matrix of WoE values over time.
+            min_groups: Minimum number of groups to create.
+            is_ordered: Whether the categories have a natural order.
+
+        Returns:
+            dict[str, str]: A mapping from original category names to group names.
+        """
         categories = stability_matrix.columns.tolist()
         n = len(categories)
 

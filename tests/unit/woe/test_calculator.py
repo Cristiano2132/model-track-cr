@@ -4,7 +4,7 @@ from model_track.woe.calculator import WoeCalculator
 
 
 def test_woe_calculator_fit_transform():
-    """Garante o cálculo correto do WoE e o fallback para 0.0 em categorias novas."""
+    """Ensure correct WoE calculation and fallback to 0.0 for new categories."""
     df_train = pd.DataFrame({"cat": ["A", "A", "B", "B", None], "target": [0, 0, 1, 1, 0]})
 
     df_test = pd.DataFrame(
@@ -28,7 +28,7 @@ def test_woe_calculator_fit_transform():
 
 
 def test_woe_calculator_unfitted_column_skip():
-    """Cobre a linha 38: Pular colunas que não foram mapeadas no fit."""
+    """Test skipping columns that were not mapped during fit."""
     df_trans = pd.DataFrame({"col_b": ["Z", "Z"]})
 
     calc = WoeCalculator()
@@ -36,4 +36,4 @@ def test_woe_calculator_unfitted_column_skip():
     try:
         calc.transform(df_trans, columns=["col_b"])
     except RuntimeError as e:
-        assert str(e) == "WoeCalculator precisa ser fitado antes do transform."
+        assert str(e) == "WoeCalculator must be fitted before transforming."

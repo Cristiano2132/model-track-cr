@@ -3,11 +3,19 @@ import pandas as pd
 
 
 class DataOptimizer:
-    """Otimizador de memória para DataFrames de larga escala."""
+    """Memory optimizer for large-scale DataFrames."""
 
     @staticmethod
     def _downcast_numeric(series: pd.Series) -> pd.Series:
-        """Aplica downcast no tipo da Series se possível para economizar memória."""
+        """
+        Downcast the Series type if possible to save memory.
+
+        Args:
+            series: Input Series.
+
+        Returns:
+            pd.Series: Optimized Series.
+        """
         col_type = series.dtype
 
         if col_type == "object" or isinstance(col_type, pd.CategoricalDtype):
@@ -32,9 +40,16 @@ class DataOptimizer:
     @staticmethod
     def reduce_mem_usage(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
         """
-        Reduz tipos numéricos para economizar RAM e reporta o ganho.
+        Reduce numeric types to save RAM and report the gain.
+
+        Args:
+            df: Input DataFrame.
+            verbose: If True, prints optimization report.
+
+        Returns:
+            pd.DataFrame: Optimized DataFrame.
         """
-        # Criamos uma cópia para garantir a imutabilidade do original
+        # Create a copy to ensure original immutability
         df = df.copy()
 
         start_mem = df.memory_usage().sum() / 1024**2
@@ -47,8 +62,8 @@ class DataOptimizer:
         if verbose:
             diff = start_mem - end_mem
             pct = (diff / start_mem) * 100 if start_mem > 0 else 0
-            print(f"📉 Memória Inicial: {start_mem:.2f} MB")
-            print(f"✅ Memória Final:   {end_mem:.2f} MB")
-            print(f"🚀 Redução de:      {diff:.2f} MB ({pct:.1f}%)")
+            print(f"📉 Initial Memory: {start_mem:.2f} MB")
+            print(f"✅ Final Memory:   {end_mem:.2f} MB")
+            print(f"🚀 Reduction:      {diff:.2f} MB ({pct:.1f}%)")
 
         return df
