@@ -5,7 +5,7 @@ import pandas as pd
 
 
 class DataAuditor:
-    """Auditoria profunda de schemas e integridade estatística entre tabelas."""
+    """Deep audit of schemas and statistical integrity between tables."""
 
     def __init__(self, target: str | None = None):
         self.target = target
@@ -14,7 +14,15 @@ class DataAuditor:
         self, df_a: pd.DataFrame, df_b: pd.DataFrame, tolerance: float = 1e-6
     ) -> dict[str, Any]:
         """
-        Compara schemas, colunas exclusivas e integridade de valores em colunas comuns.
+        Compare schemas, exclusive columns, and value integrity in common columns.
+
+        Args:
+            df_a: First DataFrame.
+            df_b: Second DataFrame.
+            tolerance: Numeric tolerance for mean comparison.
+
+        Returns:
+            dict[str, Any]: Dictionary with differences found.
         """
         cols_a = set(df_a.columns)
         cols_b = set(df_b.columns)
@@ -48,7 +56,16 @@ class DataAuditor:
         }
 
     def _get_column_stats(self, col: str, series: pd.Series) -> dict[str, Any]:
-        """Calcula estatísticas para uma única coluna."""
+        """
+        Calculate statistics for a single column.
+
+        Args:
+            col: Column name.
+            series: Data series to analyze.
+
+        Returns:
+            dict[str, Any]: Column statistics.
+        """
         n_unique = int(series.nunique())
 
         # Exemplos determinísticos
@@ -89,6 +106,14 @@ class DataAuditor:
         return stats
 
     def get_summary(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Gera sumário estatístico exaustivo das colunas."""
+        """
+        Generate an exhaustive statistical summary of the columns.
+
+        Args:
+            df: Input DataFrame.
+
+        Returns:
+            pd.DataFrame: Statistical summary.
+        """
         summary_data = [self._get_column_stats(col, df[col]) for col in df.columns]
         return pd.DataFrame(summary_data).set_index("column_name")

@@ -4,14 +4,24 @@ from scipy.stats import chi2_contingency
 
 
 def compute_iv(df: pd.DataFrame, feature: str, target: str) -> float:
-    """Calcula o Information Value usando Laplace Smoothing para evitar Log(0)."""
+    """
+    Calculate the Information Value (IV) using Laplace Smoothing to avoid log(0).
+
+    Args:
+        df: Input DataFrame.
+        feature: Feature column name.
+        target: Target column name (expected to be binary).
+
+    Returns:
+        float: Calculated Information Value.
+    """
     counts = pd.crosstab(df[feature], df[target])
 
-    # Se só houver uma classe do target (ex: só tem fraude na base toda)
+    # If there's only one target class (e.g., only fraud in the entire dataset)
     if counts.shape[1] < 2:
         return 0.0
 
-    # Assume que a coluna 0 é "Good" e 1 é "Bad" (padrão de Fraude/Crédito)
+    # Assume column 0 is "Good" and 1 is "Bad" (Fraud/Credit standard)
     dist_good = (counts.iloc[:, 0] + 0.5) / (counts.iloc[:, 0].sum() + 0.5)
     dist_bad = (counts.iloc[:, 1] + 0.5) / (counts.iloc[:, 1].sum() + 0.5)
 
@@ -22,7 +32,17 @@ def compute_iv(df: pd.DataFrame, feature: str, target: str) -> float:
 
 
 def compute_cramers_v(df: pd.DataFrame, f1: str, f2: str) -> float:
-    """Calcula a correlação categórica de Cramer's V com correção de viés."""
+    """
+    Calculate Cramer's V categorical correlation with bias correction.
+
+    Args:
+        df: Input DataFrame.
+        f1: First feature column name.
+        f2: Second feature column name.
+
+    Returns:
+        float: Calculated Cramer's V correlation.
+    """
     obs = pd.crosstab(df[f1], df[f2]).to_numpy()
     if obs.size == 0 or obs.sum() == 0:
         return 0.0
