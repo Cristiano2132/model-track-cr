@@ -40,11 +40,15 @@ class StatisticalSelector(BaseTransformer):
         features = features or []
         df_sample = df
 
-        # Stratified sampling to speed up Cramer's V
+        # Stratified sampling to speed up Cramer's V (avoid groupby.apply: pandas FutureWarning)
         if self.sample_size and len(df) > self.sample_size:
             frac = self.sample_size / len(df)
-            df_sample = df.groupby(target, group_keys=False, observed=True).apply(
-                lambda x: x.sample(frac=frac, random_state=42)
+            df_sample = pd.concat(
+                [
+                    g.sample(frac=frac, random_state=42)
+                    for _, g in df.groupby(target, observed=True, sort=False)
+                ],
+                axis=0,
             )
 
         valid_features = [f for f in features if f in df_sample.columns]
