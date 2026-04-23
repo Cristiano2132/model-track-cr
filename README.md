@@ -50,7 +50,7 @@ Each step is supported by a dedicated module that integrates naturally with the 
 
 ## 🏗️ Project Architecture
 
-`model-track-cr` follows a modular structure based on transformers compatible with the Scikit-Learn ecosystem. This ensures seamless integration into standard data science pipelines.
+`model-track-cr` is organized in **pandas-first** modules. Several classes inherit from `BaseTransformer` and expose `fit` / `transform`, but method signatures are **DataFrame-oriented** (for example, explicit column names and optional `columns` lists). That keeps the API explicit for modeling work; if you need a strict **scikit-learn `Pipeline`**, plan for thin wrapper steps that adapt arguments and return types.
 
 ```mermaid
 classDiagram
@@ -62,6 +62,14 @@ classDiagram
         }
     }
 
+    namespace binning {
+        class TreeBinner {
+            +bins
+            +fit(df, column, target)
+            +transform(df, column)
+        }
+    }
+
     namespace woe {
         class WoeCalculator {
             +mapping_: dict
@@ -70,8 +78,9 @@ classDiagram
         }
         class WoeStability {
             +date_col: str
+            +calc: WoeCalculator
             +calculate_stability_matrix(df, feature_col, target_col)
-            +generate_view(matrix, ax, title)
+            +generate_view(matrix, title, ax)
         }
         class CategoryMapper {
             +mapping_dict_: dict
@@ -79,89 +88,90 @@ classDiagram
         }
     }
 
+    BaseTransformer <|-- TreeBinner
     BaseTransformer <|-- WoeCalculator
     WoeStability *-- WoeCalculator : composes (self.calc)
-    WoeStability ..> CategoryMapper : provides data for
+    WoeStability ..> CategoryMapper : stability matrices
 ```
 
-### Key Components
+### Key components
 
-* **BaseTransformer**: An abstract base class that enforces the `fit`/`transform` contract, ensuring compatibility with Scikit-Learn pipelines.
-* **WoeCalculator**: Handles the Weight of Evidence (WoE) logic with Laplace Smoothing, essential for credit risk scorecards.
-* **WoeStability**: Orchestrates temporal stability analysis, generating WoE matrices across different time periods (safiras).
-* **CategoryMapper**: An optimized grouping engine that uses exhaustive search to minimize WoE inversions and maintain monotonic risk relationships.
+* **BaseTransformer**: Abstract `fit` / `transform` / `fit_transform` contract shared across several transformers.
+* **TreeBinner**: Supervised binning via `sklearn.tree.DecisionTreeClassifier` split thresholds.
+* **WoeCalculator**: WoE mappings with Laplace smoothing; `fit` / `transform` operate on one or more categorical columns.
+* **WoeStability** (`model_track.woe`): Per-period WoE matrices and plotting helpers; composes a `WoeCalculator`.
+* **CategoryMapper** (`model_track.woe`): Grouping suggestions over stability matrices (inversions / SSE cost).
+* **ProjectContext** (`model_track`): Serializable bag for bins, WoE maps, selected features, and free-form metadata (intended to grow with the library).
 
 ---
 
 
 ## 🧩 Core Modules Overview
 
-### 📊 1. Statistics & Diagnostics (`stats`)
+### 📊 1. Diagnostics and early statistics (`preprocessing`, `stats`)
 
-Provides tools for early-stage variable understanding:
+Use **`preprocessing`** for table-level audits and summaries, and **`stats`** for IV / association style metrics and selection helpers.
 
-- global summaries
-- missing value analysis
-- basic diagnostics to guide modeling decisions
+Example (variable audit summary):
 
-Example:
 ```python
-from model_track.stats import get_summary
+from model_track.preprocessing import DataAuditor
 
-summary = get_summary(df)
-````
+auditor = DataAuditor(target="target")
+summary = auditor.get_summary(df)
+```
+
+Example (IV-driven feature screening lives under `stats`):
+
+```python
+from model_track.stats import StatisticalSelector
+
+selector = StatisticalSelector()
+selector.fit(df, target="target", features=["feat_a", "feat_b"])
+df_selected = selector.transform(df)
+```
 
 This step typically informs:
 -	which variables to bin
 -	how to handle missing values
 -	potential stability risks
 
-📘 Detailed documentation is provided in a dedicated module guide.
-
 ---
 
-🪜 2. Binning & Categorization (binning)
+### 🪜 2. Binning & categorization (`binning`)
 
-Responsible for transforming continuous variables into interpretable and stable categories.
+Responsible for turning continuous inputs into ordered categories for WoE and stability workflows.
 
-Available strategies:
--	tree-based binning (TreeBinner)
--	quantile-based binning (QuantileBinner)
--	consistent application via BinApplier
+**Currently exported:** supervised **tree-based** binning (`TreeBinner`). Quantile binning and a dedicated “bin applier” helper are **not** in the package yet; they are listed under [Technical roadmap](#technical-roadmap).
 
 Example:
+
 ```python
-from model_track.binning import TreeBinner, BinApplier
+from model_track.binning import TreeBinner
 
 binner = TreeBinner(max_depth=2)
-binner.fit(df, feature="income", target="target")
-
-applier = BinApplier(df)
-df["income_cat"] = applier.apply("income", binner.bins_)
-````
-
-📘 Each binning strategy is documented in its own module reference.
+binner.fit(df, column="income", target="target")
+df["income_cat"] = binner.transform(df, column="income")
+```
 
 ---
 
-🧮 3. WOE & IV (woe)
+### 🧮 3. WoE and IV (`woe`, `stats`)
 
 Implements classic supervised modeling metrics:
--	WOE / IV tables
--	reusable WOE mappings
--	per-period analysis
+
+- WoE mappings and transformed columns via `WoeCalculator`
+- IV and related helpers via `model_track.stats` (for example `compute_iv`)
+- Per-period WoE paths via `WoeStability` (see section 4)
 
 Example:
 
 ```python
 from model_track.woe import WoeCalculator
 
-woe_table = WoeCalculator.compute_table(
-    df=df,
-    target_col="target",
-    feature_col="income_cat",
-    event_value=1,
-)
+calc = WoeCalculator()
+calc.fit(df, target="target", columns=["income_cat"])
+df_woe = calc.transform(df, columns=["income_cat"])
 ```
 
 These outputs are typically used for:
@@ -169,28 +179,24 @@ These outputs are typically used for:
 -	model interpretability
 -	direct input into linear models
 
-📘 Full API and examples are covered in the WOE module documentation.
-
 ---
 
-📈 4. Temporal Stability (stability)
+### 📈 4. Temporal WoE stability (`model_track.woe`)
 
-Tools to assess whether variable behavior remains consistent over time.
-
-Currently available:
--	WOE stability by period
--	integrated visualizations
+Tools to assess whether category-level WoE stays consistent over time (e.g. by vintage or calendar period).
 
 Example:
 
 ```python
-from model_track.stability.woe import WoeStability
+from model_track.woe import WoeStability
 
-ws = WoeStability(df=df, date_col="period")
-ws.generate_view(
+ws = WoeStability(date_col="period")
+matrix = ws.calculate_stability_matrix(
+    df=df,
     feature_col="income_cat",
-    target_col="target"
+    target_col="target",
 )
+ws.generate_view(matrix, title="Income_cat WoE stability")
 ```
 
 This stage is essential for:
@@ -198,12 +204,9 @@ This stage is essential for:
 -	supporting production decisions
 -	monitoring deployed models
 
-📘 Stability concepts and metrics are documented in a dedicated guide.
-
-
 ---
 
-🚀 Installation
+## 🚀 Installation
 
 > Install in user mode:
 ```bash
@@ -215,7 +218,7 @@ The lib is available on https://pypi.org/project/model-track-cr/
 > Install in development mode:
 
 ```bash
-git clone https://github.com/YOUR_USER/model-track-cr.git
+git clone https://github.com/Cristiano2132/model-track-cr.git
 cd model-track-cr
 
 pip install -e .
@@ -225,7 +228,7 @@ poetry install
 ```
 ---
 
-## 🧪 Testing & Code Quality
+## 🧪 Testing and code quality
 
 Run tests: `make test`
 
@@ -235,41 +238,23 @@ HTML coverage report: `htmlcov/index.html`
 
 The project follows strict Test-Driven Development (TDD) and is backed by a robust **Testing Pyramid Strategy**. Every new feature must be accompanied by automated tests.
 
-📘 For an in-depth look at our testing tiers (Unit, Component, Integration, API/E2E), please refer to the [Testing Strategy Guide](documentation/TESTING_STRATEGY.md).
+For testing tiers (unit, statistical, integration, benchmarks), see the [Testing Strategy Guide](documentation/TESTING_STRATEGY.md). Contributor environment notes live in [`AGENTS.md`](AGENTS.md).
 
 ---
 
-🔄 Development Workflow & Project Management
+## Workflow and contributions
 
-This project uses:
--	Git Flow
--	GitHub Issues
--	GitHub Projects (Board)
-
-The full development workflow — including branch strategy, issue management, pull requests, CI behavior, and versioning — is documented in:
-
-📘 Project Management Guide with GitHub Projects + Git Flow￼
-
-This document is the official reference for contributors.
+This project uses Git Flow, GitHub Issues, and Pull Requests. Day-to-day commands, CI expectations, and local setup are summarized in [`AGENTS.md`](AGENTS.md).
 
 ---
 
-📚 Documentation Structure
+## Documentation in this repository
 
-Documentation is organized in three layers:
-	1.	Module-level documentation
-Each core module (binning, stats, woe, stability, etc.) has its own detailed guide.
-	2.	API and technical references
-Focused on functions, classes, and parameters.
-	3.	End-to-end modeling guide
-A complete, real-world example demonstrating how all modules are used together
-in a full modeling workflow.
-
-The end-to-end guide is intended to be the final and most integrative document.
+Right now, the main narrative lives in this README (EN / PT-BR) plus the testing strategy linked above. Docstrings in `src/model_track` are the API reference. Deeper per-module guides and an end-to-end modeling walkthrough can be added as the surface area grows.
 
 ---
 
-🧠 When Should You Use This Library?
+## When should you use this library?
 
 This project is a good fit if you want to:
 -	standardize modeling workflows across teams
@@ -280,16 +265,17 @@ This project is a good fit if you want to:
 
 ---
 
-📍 Technical Roadmap
--	automated PSI computation
--	feature selection based on stability
--	pipeline integrations
--	additional drift metrics
--	improved visualization utilities
+## Technical roadmap
+
+- Quantile-based binning and helpers to apply saved bins consistently across tables
+- Automated PSI and additional drift metrics
+- Feature selection informed by stability matrices
+- Clearer optional adapters for scikit-learn `Pipeline` users
+- Richer monitoring and visualization utilities
 
 ---
 
-📝 License
+## License
 
 MIT
 
