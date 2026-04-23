@@ -70,8 +70,21 @@ known-first-party = ["model_track"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-# addopts movido para cá para garantir que o make test funcione com cobertura
-addopts = "--cov=model_track --cov-report=term-missing --cov-fail-under=90"
+python_files = ["test_*.py"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--cov=model_track",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=90",
+]
+markers = [
+    "unit: Testes unitários rápidos",
+    "statistical: Testes de propriedade com Hypothesis",
+    "integration: Testes de fluxo completo",
+    "benchmark: Testes de performance",
+]
 
 # -----------------------------
 # MyPy (Type Checking)
