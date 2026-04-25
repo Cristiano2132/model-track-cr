@@ -1,0 +1,51 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.0, pytest-9.0.3, pluggy-1.6.0
+rootdir: /Users/cristianooliveira/Documents/model-track-cr
+configfile: pyproject.toml
+plugins: cov-5.0.0, hypothesis-6.152.2
+collected 78 items / 1 error
+
+==================================== ERRORS ====================================
+_______ ERROR collecting tests/unit/evaluation/test_binary_evaluator.py ________
+ImportError while importing test module '/Users/cristianooliveira/Documents/model-track-cr/tests/unit/evaluation/test_binary_evaluator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'evaluation.test_binary_evaluator'
+
+---------- coverage: platform darwin, python 3.13.0-final-0 ----------
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+src/model_track/__init__.py                     4      0   100%
+src/model_track/base.py                        54     17    69%   44, 47-48, 51, 54, 63, 66-69, 72, 75, 84-85, 88, 91, 112, 125, 138
+src/model_track/binning/__init__.py             2      0   100%
+src/model_track/binning/tree_binner.py         25     18    28%   13-16, 31-48, 61-71
+src/model_track/context.py                     15      8    47%   13-18, 27, 40
+src/model_track/evaluation/__init__.py          3      0   100%
+src/model_track/evaluation/base.py             10      0   100%
+src/model_track/evaluation/binary.py           44     31    30%   47, 76-90, 131-147, 155-160
+src/model_track/preprocessing/__init__.py       5      0   100%
+src/model_track/preprocessing/auditor.py       42     34    19%   11, 27-52, 69-106, 118-119
+src/model_track/preprocessing/encoders.py      27     21    22%   13-15, 31-41, 54-66
+src/model_track/preprocessing/memory.py        35     28    20%   19-38, 53-69
+src/model_track/preprocessing/types.py         34     28    18%   16-19, 34-58, 70-87
+src/model_track/stability/__init__.py           2      0   100%
+src/model_track/stability/psi.py               71     58    18%   16-19, 23-56, 60-92, 96-107, 111, 116-118, 122
+src/model_track/stats/__init__.py               3      0   100%
+src/model_track/stats/metrics.py               25     20    20%   18-31, 46-60
+src/model_track/stats/selection.py             38     31    18%   19-24, 40-84, 96
+src/model_track/utils/__init__.py               0      0   100%
+src/model_track/woe/__init__.py                 3      0   100%
+src/model_track/woe/calculator.py              33     25    24%   11-12, 26-33, 49-58, 71-84
+src/model_track/woe/stability.py              146    124    15%   15-16, 32-46, 62-71, 81, 84-90, 93-94, 99-113, 118-122, 125-130, 139-159, 164-181, 186-196, 201-213, 229-257
+-------------------------------------------------------------------------
+TOTAL                                         621    443    29%
+Coverage XML written to file coverage.xml
+
+FAIL Required test coverage of 90% not reached. Total coverage: 28.66%
+=========================== short test summary info ============================
+ERROR tests/unit/evaluation/test_binary_evaluator.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 2.12s ===============================
