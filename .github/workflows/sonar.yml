@@ -29,8 +29,10 @@ jobs:
       - name: Run tests with coverage
         # Gerando o XML que o sonar-project.properties vai ler
         run: |
-          poetry run pytest --cov=src --cov-report=xml:coverage.xml --cov-fail-under=0
-
+          poetry run pytest \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
