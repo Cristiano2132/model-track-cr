@@ -211,6 +211,9 @@ This stage is essential for:
 > Install in user mode:
 ```bash
 pip install model-track-cr
+
+# Or with heavy ML dependencies (LightGBM, etc.):
+pip install "model-track-cr[tuning]"
 ```
 The lib is available on https://pypi.org/project/model-track-cr/
 
