@@ -7,6 +7,7 @@ Each evaluator follows a unified interface defined by ``BaseEvaluator``.
 Classes:
     BaseEvaluator: Abstract base class for all evaluators.
     BinaryEvaluator: Evaluator for binary classification (KS, AUC, Gini, Brier, log-loss).
+    DecisionTable: Capture/decline table for binary risk models.
 
 Example:
     >>> from model_track.evaluation import BinaryEvaluator
@@ -21,5 +22,6 @@ Example:
 
 from model_track.evaluation.base import BaseEvaluator
 from model_track.evaluation.binary import BinaryEvaluator
+from model_track.evaluation.decision_table import DecisionTable
 
-__all__ = ["BaseEvaluator", "BinaryEvaluator"]
+__all__ = ["BaseEvaluator", "BinaryEvaluator", "DecisionTable"]
