@@ -49,4 +49,4 @@ The CI skips `CVE‑2026‑4539`.
 
 ## Documentation & workflow
 The README contains the full library overview and usage examples.
-For contribution guidelines, see the Project Management Guide in the docs.
+For contribution guidelines and the mandatory testing checklist, see [CONTRIBUTING.md](CONTRIBUTING.md).

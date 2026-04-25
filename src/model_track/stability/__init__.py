@@ -1,3 +1,3 @@
-"""
-Stability analysis module for model-track.
-"""
+from .psi import PSICalculator
+
+__all__ = ["PSICalculator"]
