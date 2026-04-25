@@ -1,19 +1,7 @@
 [run]
-source = src/model_track
-branch = True
-omit =
-    tests/*
-    **/__init__.py
+relative_files = True
+source = src
 
 [report]
-show_missing = True
-exclude_lines =
-    pragma: no cover
-    def __repr__
-    if self.debug:
-    if __name__ == .__main__.:
-    raise AssertionError
-    raise NotImplementedError
-    if TYPE_CHECKING:
-    class .*\bProtocol\):
-    @(abc\.)?abstractmethod
+omit =
+    tests/*
