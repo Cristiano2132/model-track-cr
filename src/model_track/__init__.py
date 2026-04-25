@@ -20,7 +20,22 @@ Example:
 
 __version__ = "0.1.0"
 
-from model_track.base import BaseTransformer
+from model_track.base import (
+    BaseTransformer,
+    BinaryAdapter,
+    MulticlassAdapter,
+    RegressionAdapter,
+    TaskAdapter,
+    TaskType,
+)
 from model_track.context import ProjectContext
 
-__all__ = ["BaseTransformer", "ProjectContext"]
+__all__ = [
+    "BaseTransformer",
+    "ProjectContext",
+    "TaskType",
+    "TaskAdapter",
+    "BinaryAdapter",
+    "MulticlassAdapter",
+    "RegressionAdapter",
+]
