@@ -50,3 +50,11 @@ The CI skips `CVE‑2026‑4539`.
 ## Documentation & workflow
 The README contains the full library overview and usage examples.
 For contribution guidelines and the mandatory testing checklist, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### GitHub Closing Protocol (Mandatory)
+Ao finalizar uma tarefa:
+1. **Atualizar Issue**: Marcar todos os checkboxes de critérios de aceitação.
+2. **Comentar**: Adicionar observações técnicas finais na Issue.
+3. **Fechar/Mover**: Fechar a Issue ou mover para "Done".
+4. **Cleanup**: Perguntar ao usuário se deve excluir a branch temporária (local e origin).
+
