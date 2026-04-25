@@ -4,6 +4,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from model_track.base import (
+    BaseTransformer,
     BinaryAdapter,
     MulticlassAdapter,
     RegressionAdapter,
@@ -78,3 +79,21 @@ def test_task_adapter_protocol():
     assert isinstance(BinaryAdapter(), TaskAdapter)
     assert isinstance(MulticlassAdapter(), TaskAdapter)
     assert isinstance(RegressionAdapter(), TaskAdapter)
+    assert RegressionAdapter().positive_class() is None
+
+
+class MockTransformer(BaseTransformer):
+    def fit(self, df, target=None):
+        self.fitted = True
+        return self
+
+    def transform(self, df):
+        return df
+
+
+def test_base_transformer_fit_transform():
+    transformer = MockTransformer()
+    df = pd.DataFrame({"a": [1]})
+    res = transformer.fit_transform(df)
+    assert transformer.fitted
+    assert res.equals(df)
