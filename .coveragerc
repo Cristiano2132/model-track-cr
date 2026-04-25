@@ -1,9 +1,19 @@
 [run]
-source = src
-relative_files = True
-
-[report]
+source = src/model_track
+branch = True
 omit =
     tests/*
-    src/model_track/context.py
-    src/model_track/base.py
+    **/__init__.py
+
+[report]
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if __name__ == .__main__.:
+    raise AssertionError
+    raise NotImplementedError
+    if TYPE_CHECKING:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod

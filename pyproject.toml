@@ -76,6 +76,7 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--cov=model_track",
+    "--cov-config=.coveragerc",
     "--cov-report=term-missing",
     "--cov-report=xml",
     "--cov-fail-under=90",

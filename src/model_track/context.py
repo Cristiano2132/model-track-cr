@@ -15,6 +15,7 @@ class ProjectContext:
         self.woe_maps: dict[str, dict[str, float]] = {}
         self.selected_features: list[str] = []
         self.target: str | None = None
+        self.reference_stats: dict[str, Any] = {}
 
     def save(self, path: str) -> None:
         """
