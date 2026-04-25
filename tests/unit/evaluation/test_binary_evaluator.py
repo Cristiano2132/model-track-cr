@@ -86,6 +86,13 @@ class TestBinaryEvaluatorMetrics:
         with pytest.raises(ValueError, match="2 unique classes"):
             ev.evaluate(y_true, y_proba)
 
+    def test_ks_single_class(self) -> None:
+        y_true = pd.Series([0, 0, 0])
+        y_proba = pd.Series([0.1, 0.2, 0.3])
+        ev = BinaryEvaluator()
+        ks = ev._compute_ks(y_true.values, y_proba.values)
+        assert ks == 0.0
+
 
 class TestBinaryEvaluatorReport:
     def test_report_without_date_col(self, mixed_data: tuple[pd.Series, pd.Series]) -> None:

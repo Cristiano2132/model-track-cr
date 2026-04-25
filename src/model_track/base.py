@@ -109,7 +109,7 @@ class BaseTransformer(ABC):
         Returns:
             BaseTransformer: The fitted transformer instance.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -122,7 +122,7 @@ class BaseTransformer(ABC):
         Returns:
             pd.DataFrame: The transformed DataFrame.
         """
-        pass
+        pass  # pragma: no cover
 
     def fit_transform(self, df: pd.DataFrame, target: str | None = None) -> pd.DataFrame:
         """

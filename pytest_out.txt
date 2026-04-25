@@ -1,0 +1,129 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.0, pytest-9.0.3, pluggy-1.6.0
+rootdir: /Users/cristianooliveira/Documents/model-track-cr
+configfile: pyproject.toml
+plugins: cov-5.0.0, hypothesis-6.152.2
+collected 13 items
+
+tests/unit/stability/test_psi_calculator.py ......F.                     [ 61%]
+tests/unit/test_context.py ....F                                         [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_psi_from_empty_context __________________________
+
+    def test_psi_from_empty_context():
+        from model_track.context import ProjectContext
+    
+        ctx = ProjectContext()
+        calc = PSICalculator.from_context(ctx)
+>       assert calc.reference_stats_ == {}
+E       assert None == {}
+E        +  where None = <model_track.stability.psi.PSICalculator object at 0x10a3b8050>.reference_stats_
+
+tests/unit/stability/test_psi_calculator.py:83: AssertionError
+_________ TestProjectContext.test_legacy_context_loading_with_warning __________
+
+self = <test_context.TestProjectContext object at 0x10a2e3bf0>
+
+    def test_legacy_context_loading_with_warning(self) -> None:
+        # Create a mock legacy context by hacking an object
+        class LegacyContext:
+            def __init__(self) -> None:
+                self.metadata = {"old": "val"}
+                self.bins_map = {}
+                self.woe_maps = {}
+                self.selected_features = ["a"]
+                self.target = "y"
+                # Missing schema_version, task_type, etc.
+    
+        legacy_ctx = LegacyContext()
+    
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "legacy.joblib")
+>           joblib.dump(legacy_ctx, path)
+
+tests/unit/test_context.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../Library/Caches/pypoetry/virtualenvs/model-track-cr-i44ajHuC-py3.13/lib/python3.13/site-packages/joblib/numpy_pickle.py:600: in dump
+    NumpyPickler(f, protocol=protocol).dump(value)
+../../.pyenv/versions/3.13.0/lib/python3.13/pickle.py:484: in dump
+    self.save(obj)
+../../Library/Caches/pypoetry/virtualenvs/model-track-cr-i44ajHuC-py3.13/lib/python3.13/site-packages/joblib/numpy_pickle.py:395: in save
+    return Pickler.save(self, obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../../.pyenv/versions/3.13.0/lib/python3.13/pickle.py:600: in save
+    self.save_reduce(obj=obj, *rv)
+../../.pyenv/versions/3.13.0/lib/python3.13/pickle.py:684: in save_reduce
+    save(cls)
+../../Library/Caches/pypoetry/virtualenvs/model-track-cr-i44ajHuC-py3.13/lib/python3.13/site-packages/joblib/numpy_pickle.py:395: in save
+    return Pickler.save(self, obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../../.pyenv/versions/3.13.0/lib/python3.13/pickle.py:557: in save
+    f(self, obj)  # Call unbound method with explicit self
+    ^^^^^^^^^^^^
+../../.pyenv/versions/3.13.0/lib/python3.13/pickle.py:1171: in save_type
+    return self.save_global(obj)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <joblib.numpy_pickle.NumpyPickler object at 0x10a3b0410>
+obj = <class 'test_context.TestProjectContext.test_legacy_context_loading_with_warning.<locals>.LegacyContext'>
+name = 'TestProjectContext.test_legacy_context_loading_with_warning.<locals>.LegacyContext'
+
+    def save_global(self, obj, name=None):
+        write = self.write
+        memo = self.memo
+    
+        if name is None:
+            name = getattr(obj, '__qualname__', None)
+        if name is None:
+            name = obj.__name__
+    
+        module_name = whichmodule(obj, name)
+        try:
+            __import__(module_name, level=0)
+            module = sys.modules[module_name]
+            obj2, parent = _getattribute(module, name)
+        except (ImportError, KeyError, AttributeError):
+>           raise PicklingError(
+                "Can't pickle %r: it's not found as %s.%s" %
+                (obj, module_name, name)) from None
+E           _pickle.PicklingError: Can't pickle <class 'test_context.TestProjectContext.test_legacy_context_loading_with_warning.<locals>.LegacyContext'>: it's not found as test_context.TestProjectContext.test_legacy_context_loading_with_warning.<locals>.LegacyContext
+
+../../.pyenv/versions/3.13.0/lib/python3.13/pickle.py:1086: PicklingError
+
+---------- coverage: platform darwin, python 3.13.0-final-0 ----------
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+src/model_track/__init__.py                        4      0   100%
+src/model_track/base.py                           54     17    69%   44, 47-48, 51, 54, 63, 66-69, 72, 75, 84-85, 88, 91, 112, 125, 138
+src/model_track/binning/__init__.py                2      2     0%   12-14
+src/model_track/binning/tree_binner.py            25     25     0%   1-71
+src/model_track/context.py                        40      7    82%   96-107
+src/model_track/evaluation/__init__.py             4      4     0%   23-27
+src/model_track/evaluation/base.py                10     10     0%   3-42
+src/model_track/evaluation/binary.py              44     44     0%   3-162
+src/model_track/evaluation/decision_table.py      70     70     0%   3-281
+src/model_track/preprocessing/__init__.py          5      5     0%   14-19
+src/model_track/preprocessing/auditor.py          42     42     0%   1-119
+src/model_track/preprocessing/encoders.py         27     27     0%   1-66
+src/model_track/preprocessing/memory.py           35     35     0%   1-69
+src/model_track/preprocessing/types.py            34     34     0%   1-87
+src/model_track/stability/__init__.py              2      0   100%
+src/model_track/stability/psi.py                  71      2    97%   101, 122
+src/model_track/stats/__init__.py                  3      3     0%   12-15
+src/model_track/stats/metrics.py                  25     25     0%   1-60
+src/model_track/stats/selection.py                38     38     0%   1-96
+src/model_track/utils/__init__.py                  0      0   100%
+src/model_track/woe/__init__.py                    3      3     0%   16-19
+src/model_track/woe/calculator.py                 33     33     0%   1-84
+src/model_track/woe/stability.py                 146    146     0%   1-257
+----------------------------------------------------------------------------
+TOTAL                                            717    572    20%
+Coverage XML written to file coverage.xml
+
+FAIL Required test coverage of 90% not reached. Total coverage: 20.22%
+=========================== short test summary info ============================
+FAILED tests/unit/stability/test_psi_calculator.py::test_psi_from_empty_context
+FAILED tests/unit/test_context.py::TestProjectContext::test_legacy_context_loading_with_warning
+========================= 2 failed, 11 passed in 0.69s =========================

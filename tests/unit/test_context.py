@@ -68,6 +68,7 @@ class TestProjectContext:
         del legacy_ctx.task_type
         del legacy_ctx.model_hash
         del legacy_ctx.training_date
+        del legacy_ctx.reference_stats
         legacy_ctx.target = "y"
         legacy_ctx.selected_features = ["a"]
 

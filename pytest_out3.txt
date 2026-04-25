@@ -1,0 +1,98 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.0, pytest-9.0.3, pluggy-1.6.0
+rootdir: /Users/cristianooliveira/Documents/model-track-cr
+configfile: pyproject.toml
+plugins: cov-5.0.0, hypothesis-6.152.2
+collected 5 items
+
+tests/unit/test_context.py ....F                                         [100%]
+
+=================================== FAILURES ===================================
+_________ TestProjectContext.test_legacy_context_loading_with_warning __________
+
+self = <test_context.TestProjectContext object at 0x10c27ab10>
+
+    def test_legacy_context_loading_with_warning(self) -> None:
+        legacy_ctx = LegacyContext()
+    
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "legacy.joblib")
+            joblib.dump(legacy_ctx, path)
+    
+            with pytest.warns(DeprecationWarning, match="Loading legacy context"):
+>               loaded_ctx = ProjectContext.load(path)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_context.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'model_track.context.ProjectContext'>
+path = '/var/folders/0m/mtf6psc91_l02bjt_n2nd7bh0000gn/T/tmpclnlw9i0/legacy.joblib'
+
+    @classmethod
+    def load(cls, path: str) -> "ProjectContext":
+        """
+        Load a context from disk. Automatically handles schema migrations.
+    
+        Args:
+            path: Path to the saved context file.
+    
+        Returns:
+            ProjectContext: The loaded context instance.
+        """
+        ctx = joblib.load(path)
+    
+        if not hasattr(ctx, "schema_version"):
+            warnings.warn(
+                "Loading legacy context without schema_version. Attributes will be backfilled.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # Backfill missing attributes to gracefully upgrade
+            ctx.schema_version = "2.0"
+            ctx.task_type = TaskType.BINARY
+            ctx.model_hash = None
+            ctx.training_date = None
+            if not hasattr(ctx, "reference_stats"):
+                ctx.reference_stats = None
+    
+>       ctx.validate()
+        ^^^^^^^^^^^^
+E       AttributeError: 'LegacyContext' object has no attribute 'validate'
+
+src/model_track/context.py:109: AttributeError
+
+---------- coverage: platform darwin, python 3.13.0-final-0 ----------
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+src/model_track/__init__.py                        4      0   100%
+src/model_track/base.py                           54     17    69%   44, 47-48, 51, 54, 63, 66-69, 72, 75, 84-85, 88, 91, 112, 125, 138
+src/model_track/binning/__init__.py                2      2     0%   12-14
+src/model_track/binning/tree_binner.py            25     25     0%   1-71
+src/model_track/context.py                        40      0   100%
+src/model_track/evaluation/__init__.py             4      4     0%   23-27
+src/model_track/evaluation/base.py                10     10     0%   3-42
+src/model_track/evaluation/binary.py              44     44     0%   3-162
+src/model_track/evaluation/decision_table.py      70     70     0%   3-281
+src/model_track/preprocessing/__init__.py          5      5     0%   14-19
+src/model_track/preprocessing/auditor.py          42     42     0%   1-119
+src/model_track/preprocessing/encoders.py         27     27     0%   1-66
+src/model_track/preprocessing/memory.py           35     35     0%   1-69
+src/model_track/preprocessing/types.py            34     34     0%   1-87
+src/model_track/stability/__init__.py              2      2     0%   1-3
+src/model_track/stability/psi.py                  71     71     0%   1-122
+src/model_track/stats/__init__.py                  3      3     0%   12-15
+src/model_track/stats/metrics.py                  25     25     0%   1-60
+src/model_track/stats/selection.py                38     38     0%   1-96
+src/model_track/utils/__init__.py                  0      0   100%
+src/model_track/woe/__init__.py                    3      3     0%   16-19
+src/model_track/woe/calculator.py                 33     33     0%   1-84
+src/model_track/woe/stability.py                 146    146     0%   1-257
+----------------------------------------------------------------------------
+TOTAL                                            717    636    11%
+Coverage XML written to file coverage.xml
+
+FAIL Required test coverage of 90% not reached. Total coverage: 11.30%
+=========================== short test summary info ============================
+FAILED tests/unit/test_context.py::TestProjectContext::test_legacy_context_loading_with_warning
+========================= 1 failed, 4 passed in 0.66s ==========================
