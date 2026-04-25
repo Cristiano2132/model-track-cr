@@ -1,9 +1,7 @@
 [run]
-source = src
 relative_files = True
+source = src
 
 [report]
 omit =
     tests/*
-    src/model_track/context.py
-    src/model_track/base.py
