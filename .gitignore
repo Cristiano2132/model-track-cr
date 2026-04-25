@@ -94,6 +94,10 @@ docs/_build/
 *.swp
 *.bak
 
+# Local agent / AI tooling (not part of the library)
+.agent/
+.antigravity/
+
 # Agents
 *.github/agents
 
