@@ -117,7 +117,7 @@ class DecisionTable:
         rows: list[dict[str, float]] = []
         for level in self.capture_levels:
             mask = tpr_cumulative >= level
-            if not mask.any():
+            if not mask.any():  # pragma: no cover
                 continue
 
             idx = int(mask.idxmax())
@@ -233,7 +233,7 @@ class DecisionTable:
 
         try:
             import matplotlib.pyplot as plt
-        except ImportError as exc:
+        except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 "matplotlib is required for plotting. Install it with: pip install matplotlib"
             ) from exc
