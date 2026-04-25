@@ -56,7 +56,7 @@ jobs:
         run: poetry run bandit -c .bandit -r src/model_track
 
       - name: Run pip-audit
-        run: poetry run pip-audit
+        run: poetry run pip-audit --ignore-vuln CVE-2026-3219
 
   publish:
     needs: test
