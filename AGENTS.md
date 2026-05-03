@@ -58,3 +58,10 @@ Ao finalizar uma tarefa:
 3. **Fechar/Mover**: Fechar a Issue ou mover para "Done".
 4. **Cleanup**: Perguntar ao usuário se deve excluir a branch temporária (local e origin).
 
+### Task Ritual (Pre-implementation)
+Antes de iniciar qualquer issue:
+1. **Planejar**: Vincular à Milestone e definir plano.
+2. **Checar PRs**: `gh pr list` (resolver pendências primeiro).
+3. **Sincronizar**: Update `main` e `develop` via `origin`.
+4. **Branch**: Criar a partir de `develop` seguindo o padrão `feature/<id>-<slug>`.
+

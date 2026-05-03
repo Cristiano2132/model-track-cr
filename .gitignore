@@ -27,12 +27,19 @@ pip-wheel-metadata/
 uv.lock
 
 # =========================================================
-# Pytest / Coverage
+# Testing / Coverage / Linting
 # =========================================================
 .pytest_cache/
-coverage.xml
-htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
 .cache/
+coverage.xml
+.coverage
+htmlcov/
+pytest_out*.txt
+test_output.txt
+/data.coverage
 
 # =========================================================
 # Jupyter
@@ -51,8 +58,7 @@ htmlcov/
 *.joblib
 *.onnx
 
-# (se quiser versionar pequenos CSVs de exemplo,
-# remova esta seção e ignore apenas data/raw/)
+# Data and Models (Generic)
 data/
 outputs/
 models/
@@ -63,23 +69,13 @@ models/
 *.log
 
 # =========================================================
-# OS / Editor
+# OS / Editor / IDEs
 # =========================================================
-# macOS
 .DS_Store
-
-# Windows
 Thumbs.db
-
-# =========================================================
-# IDEs
-# =========================================================
-# VS Code
 .vscode/
 !.vscode/settings.json
 !.vscode/extensions.json
-
-# PyCharm
 .idea/
 
 # =========================================================
@@ -88,39 +84,25 @@ Thumbs.db
 docs/_build/
 
 # =========================================================
-# Misc
+# Misc / Temporary / Metadata
 # =========================================================
 *.tmp
 *.swp
 *.bak
+.tmp/
+.tmp.driveupload/
+scratch/
+pr_body*.md
+pr_description*.md
+sonar_issues.md
 
-# Local agent / AI tooling (not part of the library)
+# =========================================================
+# Local agent / AI tooling
+# =========================================================
 .agent/
+.cloude/
 .antigravity/
+.geminiignore
 
 # Agents
 *.github/agents
-
-# Ignore entire data directory
-/data.coverage
-/.hypothesis
-/.tmp
-
-# Google Drive / System uploads
-.tmp.driveupload/
-.DS_Store
-Thumbs.db
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-.pytest_cache/
-.coverage
-htmlcov/
-github_project/
-exemplos/data/
-
-.cloude/
-.agent/
