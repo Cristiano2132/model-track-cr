@@ -80,7 +80,7 @@ def test_psi_from_empty_context():
 
     ctx = ProjectContext()
     calc = PSICalculator.from_context(ctx)
-    assert calc.reference_stats_ is None
+    assert calc.reference_stats_ == {}
 
 
 def test_psi_transform_empty_data():

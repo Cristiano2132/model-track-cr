@@ -114,7 +114,8 @@ class PSICalculator:
     def from_context(cls, ctx: ProjectContext) -> "PSICalculator":
         """Load reference stats from a ProjectContext."""
         calc = cls()
-        calc.reference_stats_ = getattr(ctx, "reference_stats", {}).copy()
+        ref_stats = getattr(ctx, "reference_stats", None) or {}
+        calc.reference_stats_ = ref_stats.copy()
         return calc
 
     def to_context(self, ctx: ProjectContext) -> None:
