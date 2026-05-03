@@ -1,3 +1,4 @@
-from .psi import PSICalculator
+from .psi import ModelPSI, PSICalculator
+from .report import StabilityReport
 
-__all__ = ["PSICalculator"]
+__all__ = ["PSICalculator", "ModelPSI", "StabilityReport"]

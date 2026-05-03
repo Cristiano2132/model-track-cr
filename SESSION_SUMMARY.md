@@ -4,40 +4,38 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-03 00:18:00
-- **Objetivo original:** Iniciar implementação técnica baseada no quadro de tarefas (Milestones).
+- **Data / hora:** 2026-05-03 01:03:00
+- **Objetivo original:** Finalizar M1 e avançar no monitoramento de estabilidade (M3).
 
 ## Estado atual
 
 - **Feito:**
-    - Inicialização do framework `Antigravity Kit` (`.agent/` configurado).
-    - Mapeamento de Issues e Milestones via `gh` CLI.
-    - **[M1 DONE]** Resolvida Issue #42: Performance Guard em `CategoryMapper.auto_group`.
-    - Implementada heurística Greedy ($O(n^3)$) como fallback para busca exaustiva.
-    - Testes de performance validados e cobertura de 99.87% mantida.
-    - Issue #42 fechada no GitHub.
-- **Em curso:** Planejamento do M2 (Evaluation) e M3 (Stability Report).
+    - **[M1 DONE]** Finalizada Issue #42: Performance Guard em `CategoryMapper`. PR #68 mergeado.
+    - **[M3 DONE]** Implementada Issue #50: `StabilityReport` e `ModelPSI`. PR #69 aberto.
+    - **Workflow**: Formalizado o "Rito de Tarefa" em `.agent/workflows/task-ritual.md` e regras do agente.
+    - **Qualidade**: Cobertura mantida e Quality Gate validado (Ruff/Mypy).
+- **Em curso:** Aguardando revisão do PR #69 para iniciar M2 (Evaluation).
 
 ## Decisões importantes
 
-- **Arquitetura:** Uso de `MAX_EXHAUSTIVE_CATEGORIES = 15` para garantir estabilidade da lib em produção com datasets de alta cardinalidade.
-- **Protocolo:** Seguir GitFlow para as próximas features (#50 StabilityReport).
+- **Arquitetura**: `StabilityReport` agora orquestra `PSICalculator` e `ModelPSI` via `ProjectContext`.
+- **Protocolo**: Adoção mandatória de commits incrementais e sincronização pré-tarefa.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/woe/stability.py` | Implementado Performance Guard e `_greedy_group`. |
-| `tests/unit/woe/test_stability_perf.py` | Novos testes de performance e heurística. |
-| `SESSION_SUMMARY.md` | Atualizado com o progresso técnico. |
+| `src/model_track/stability/psi.py` | Adicionada classe `ModelPSI` para scores. |
+| `src/model_track/stability/report.py` | Criado orquestrador `StabilityReport`. |
+| `tests/integration/test_stability_flow.py` | Teste ponta-a-ponta de monitoramento. |
+| `.agent/workflows/task-ritual.md` | Formalização do workflow de tarefas. |
 
 ## Próximos passos
 
-1. **[HIGH] Issue #50**: Implementar `StabilityReport` (Milestone 3).
-2. **[MEDIUM] Issue #45**: Implementar `MulticlassEvaluator` (Milestone 2).
+1. **[MEDIUM] Issue #45**: Implementar `MulticlassEvaluator` (Milestone 2).
+2. **[MEDIUM] Issue #46**: Implementar `RegressionEvaluator` (Milestone 2).
 
 ## Notas para o agente
 
-- **Ambiente:** Python 3.10+, Poetry, Antigravity Kit.
-- **Caveman Mode:** Ativado (Lite) para concisão.
-- **Workflow:** Iniciar nova feature branch para cada issue (ex: `feature/50-stability-report`).
+- **Contexto**: Usar `/task-ritual` ao iniciar novas issues.
+- **Estado**: Milestone 1 concluído, Milestone 3 avançado, foco agora no Milestone 2.
