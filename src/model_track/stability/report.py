@@ -96,8 +96,8 @@ class StabilityReport:
                             "status": row["status"],
                         }
                     )
-            except Exception:
-                # Handle cases where score column might not be fitted
+            except (ValueError, KeyError):
+                # Handle cases where score column might not be fitted or missing in DF
                 pass
 
         self.results_["data"] = pd.DataFrame(report_data)
