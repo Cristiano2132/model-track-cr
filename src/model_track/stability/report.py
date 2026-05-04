@@ -87,15 +87,17 @@ class StabilityReport:
         """Calculate PSI for features and format results."""
         report_data = []
         feat_summary = self.feature_psi_.transform(df)
+        # Filter only requested features
         for _, row in feat_summary.iterrows():
-            report_data.append(
-                {
-                    "type": "feature",
-                    "name": row["feature"],
-                    "psi": row["psi"],
-                    "status": row["status"],
-                }
-            )
+            if row["feature"] in feat_list:
+                report_data.append(
+                    {
+                        "type": "feature",
+                        "name": row["feature"],
+                        "psi": row["psi"],
+                        "status": row["status"],
+                    }
+                )
         return report_data
 
     def _process_score_psi(self, df: pd.DataFrame, score_col: str) -> list[dict[str, Any]]:
