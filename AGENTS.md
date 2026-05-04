@@ -60,10 +60,18 @@ Use os workflows automatizados abaixo para garantir o rito completo:
 | `/issue-start <number>` | Ao iniciar qualquer issue | `.agent/workflows/issue-start.md` |
 | `/issue-close <issue> <pr>` | Após merge de um PR | `.agent/workflows/issue-close.md` |
 
+### Pull Request Protocol (Mandatory)
+
+Ao criar um Pull Request, é **obrigatório** garantir que os seguintes metadados estejam configurados:
+- **Projeto**: Associar ao projeto correto do repositório.
+- **Milestone**: Deve corresponder à milestone definida na issue original.
+- **Labels**: Adicionar labels de tipo (ex: `type: feature`, `type: bug`) e módulo (ex: `module: stats`).
+
 **Fluxo completo:**
 ```
 /issue-start 46   →  branch criada, plano aprovado, implementação
                   →  commits incrementais durante o trabalho
+                  →  PR criado com **Projeto**, **Milestone** e **Labels** configurados.
 /issue-close 46 71 →  checkboxes, labels, comentário, branch cleanup
 ```
 

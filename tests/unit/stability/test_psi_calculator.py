@@ -92,3 +92,35 @@ def test_psi_transform_empty_data():
     summary = calc.transform(df_curr)
 
     assert summary.empty
+
+
+def test_model_psi_transform_not_fitted():
+    import pytest
+
+    from model_track.stability import ModelPSI
+
+    mpsi = ModelPSI()
+    with pytest.raises(ValueError, match="ModelPSI must be fitted"):
+        mpsi.transform(pd.DataFrame({"score": [1, 2, 3]}))
+
+
+def test_model_psi_get_psi_no_results():
+    from model_track.stability import ModelPSI
+
+    mpsi = ModelPSI()
+    assert mpsi.get_psi() == 0.0
+
+
+def test_psi_summary_monitor_status():
+    # Use larger sample to get more precise PSI for Monitor status
+    # 0.7 vs 0.5 shift gives ~0.16 PSI
+    df_ref = pd.DataFrame({"f1": [0, 1] * 5})
+    df_curr = pd.DataFrame({"f1": [0] * 7 + [1] * 3})
+
+    calc = PSICalculator(n_bins=2)
+    calc.fit(df_ref, features=["f1"])
+    summary = calc.transform(df_curr)
+
+    # Check if we got Monitor status
+    # PSI should be around 0.169
+    assert "Monitor" in summary["status"].values

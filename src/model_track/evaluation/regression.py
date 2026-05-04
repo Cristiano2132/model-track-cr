@@ -109,7 +109,7 @@ class RegressionEvaluator(BaseEvaluator):
             return pd.DataFrame([res])[["period"] + metric_keys]
 
         rows: list[dict[str, Any]] = []
-        for period, group in df.groupby(date_col, sort=True):
+        for period, group in df.groupby(date_col, sort=True, observed=False):
             if len(group) == 0:
                 continue
             metrics = self.evaluate(group[target], group[pred_col])
