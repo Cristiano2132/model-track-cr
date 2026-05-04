@@ -4,8 +4,8 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-03 01:33:00
-- **Objetivo original:** Implementar StabilityReport e ModelPSI (Issue #50) para orquestração de drift.
+- **Data / hora:** 2026-05-04 18:05:00
+- **Objetivo original:** Milestone 4 - Implementar QuantileBinner e BinApplier.
 
 ## Estado atual
 
@@ -15,11 +15,11 @@
     - `ModelPSI` especializado para scores com suporte a deciles fixos.
     - Cobertura de testes atingiu 98.83% global (90%+ nos arquivos novos).
 - **Concluído nesta sessão:**
-    - `QuantileBinner` (unsupervised) e `BinApplier` implementados com 100% de cobertura.
-    - Milestone M4 (Binning Expansion) concluída e mergeada.
-    - PR #75 fechado e Issue #51 resolvida.
-    - Sincronização da branch `develop` realizada.
-- **Em curso / bloqueado:** Nenhum. Milestone 4 concluída.
+    - `QuantileBinner` e `BinApplier` implementados e mergeados (PR #75).
+    - `StabilityReport` refatorado para reduzir complexidade cognitiva (SonarCloud fix).
+    - Milestone M4 (Binning Expansion) concluída.
+    - Política **Flash-first** implementada no `ResourceGuard`.
+- **Em curso / bloqueado:** Nenhum. Ciclo M4 finalizado.
 
 ## Decisões importantes
 
@@ -33,17 +33,16 @@
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/stability/psi.py` | Implementado `ModelPSI` e fix em `from_context`. |
-| `src/model_track/stability/report.py` | Orquestrador principal com visualização e health checks. |
-| `src/model_track/evaluation/multiclass.py` | Nova classe `MulticlassEvaluator`. |
-| `src/model_track/evaluation/regression.py` | Nova classe `RegressionEvaluator`. |
-| `tests/unit/stability/test_stability_report.py` | Suite unitária completa com 90%+ cobertura. |
-| `tests/integration/test_stability_flow.py` | Validação ponta-a-ponta do fluxo de drift. |
+| `src/model_track/binning/quantile_binner.py` | [NEW] Binagem baseada em quantis. |
+| `src/model_track/binning/bin_applier.py` | [NEW] Utilitário para aplicação consistente de bins. |
+| `src/model_track/stability/report.py` | [REFACTOR] Redução de complexidade cognitiva. |
+| `tests/unit/binning/` | Novas suítes unitárias (100% cobertura). |
+| `tests/integration/test_binning_context.py` | Teste de workflow completo com contexto. |
 
 ## Próximos passos
 
-1. Iniciar Milestone 4: Implementar `QuantileBinner` (Issue #51).
-3. Expandir documentação de visualização no `README.md`.
+1. Iniciar Milestone 5: Implementar WOE Incremental ou Categorical Encoding (definir prioridade).
+2. Expandir documentação de binagem no `README.md`.
 
 ## Notas para o agente
 
