@@ -52,56 +52,75 @@ class StabilityReport:
         """
         Execute stability checks for features and scores.
         """
-        # Cleanup score_col from feature_psi reference stats if it was loaded from context
-        if score_col and score_col in self.feature_psi_.reference_stats_:
-            del self.feature_psi_.reference_stats_[score_col]
-
+        self._prepare_score_col(score_col)
         report_data = []
 
         # 1. Feature PSI
-        feat_list = features
-        if feat_list is None and self.context:
-            # Try to get features from context reference_stats keys
-            all_keys = list(getattr(self.context, "reference_stats", {}).keys())
-            feat_list = [k for k in all_keys if k != score_col]
-
+        feat_list = self._get_feature_list(features, score_col)
         if feat_list:
-            feat_summary = self.feature_psi_.transform(df)
-            for _, row in feat_summary.iterrows():
+            report_data.extend(self._process_feature_psi(df, feat_list))
+
+        # 2. Score PSI
+        if score_col:
+            report_data.extend(self._process_score_psi(df, score_col))
+
+        self.results_["data"] = pd.DataFrame(report_data)
+        return self.results_["data"]
+
+    def _prepare_score_col(self, score_col: str | None) -> None:
+        """Cleanup score_col from feature_psi reference stats if needed."""
+        if score_col and score_col in self.feature_psi_.reference_stats_:
+            del self.feature_psi_.reference_stats_[score_col]
+
+    def _get_feature_list(
+        self, features: list[str] | None, score_col: str | None
+    ) -> list[str] | None:
+        """Determine which features to analyze."""
+        if features is not None:
+            return features
+        if self.context:
+            all_keys = list(getattr(self.context, "reference_stats", {}).keys())
+            return [k for k in all_keys if k != score_col]
+        return None
+
+    def _process_feature_psi(self, df: pd.DataFrame, feat_list: list[str]) -> list[dict[str, Any]]:
+        """Calculate PSI for features and format results."""
+        report_data = []
+        feat_summary = self.feature_psi_.transform(df)
+        for _, row in feat_summary.iterrows():
+            report_data.append(
+                {
+                    "type": "feature",
+                    "name": row["feature"],
+                    "psi": row["psi"],
+                    "status": row["status"],
+                }
+            )
+        return report_data
+
+    def _process_score_psi(self, df: pd.DataFrame, score_col: str) -> list[dict[str, Any]]:
+        """Calculate PSI for scores and format results."""
+        self.score_psi_.score_col_ = score_col
+        if not self.score_psi_.reference_stats_ and self.context:
+            ctx_stats = getattr(self.context, "reference_stats", {})
+            if score_col in ctx_stats:
+                self.score_psi_.reference_stats_ = {score_col: ctx_stats[score_col]}
+
+        report_data = []
+        try:
+            score_summary = self.score_psi_.transform(df)
+            for _, row in score_summary.iterrows():
                 report_data.append(
                     {
-                        "type": "feature",
+                        "type": "score",
                         "name": row["feature"],
                         "psi": row["psi"],
                         "status": row["status"],
                     }
                 )
-
-        # 2. Score PSI
-        if score_col:
-            self.score_psi_.score_col_ = score_col
-            if not self.score_psi_.reference_stats_ and self.context:
-                ctx_stats = getattr(self.context, "reference_stats", {})
-                if score_col in ctx_stats:
-                    self.score_psi_.reference_stats_ = {score_col: ctx_stats[score_col]}
-
-            try:
-                score_summary = self.score_psi_.transform(df)
-                for _, row in score_summary.iterrows():
-                    report_data.append(
-                        {
-                            "type": "score",
-                            "name": row["feature"],
-                            "psi": row["psi"],
-                            "status": row["status"],
-                        }
-                    )
-            except (ValueError, KeyError):
-                # Handle cases where score column might not be fitted or missing in DF
-                pass
-
-        self.results_["data"] = pd.DataFrame(report_data)
-        return self.results_["data"]
+        except (ValueError, KeyError):
+            pass
+        return report_data
 
     def generate(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """Alias for run() to match Issue #50 specs."""
