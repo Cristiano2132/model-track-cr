@@ -14,12 +14,12 @@
     - Heatmap visual (`plot_drift_heatmap`) e checks de saúde (`is_healthy`).
     - `ModelPSI` especializado para scores com suporte a deciles fixos.
     - Cobertura de testes atingiu 98.83% global (90%+ nos arquivos novos).
-    - PR #73 (Release v0.2.0) e PR #74 (Sonar Refactor) mergeados.
-    - Issue #50, #45, #46, #49 e #47 fechadas.
-    - Milestones M1, M2 e M3 100% concluídas e sincronizadas na `main`.
-    - **100% de cobertura** atingida no módulo `evaluation` (Issue #47).
-    - Testes estatísticos e de integração adicionados.
-- **Em curso / bloqueado:** Nenhum. Iniciando Milestone 4.
+- **Concluído nesta sessão:**
+    - `QuantileBinner` (unsupervised) e `BinApplier` implementados com 100% de cobertura.
+    - Milestone M4 (Binning Expansion) concluída e mergeada.
+    - PR #75 fechado e Issue #51 resolvida.
+    - Sincronização da branch `develop` realizada.
+- **Em curso / bloqueado:** Nenhum. Milestone 4 concluída.
 
 ## Decisões importantes
 
