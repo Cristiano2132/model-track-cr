@@ -98,3 +98,52 @@ def test_stability_report_edge_cases():
     assert "UNSTABLE" in text
     assert "Unstable Features: f1" in text
     assert "Unstable Scores: score" in text
+
+
+def test_stability_report_from_context_method():
+    ctx = ProjectContext()
+    report = StabilityReport.from_context(ctx)
+    assert report.context is ctx
+
+
+def test_stability_report_generate_alias():
+    report = StabilityReport()
+    df_ref = pd.DataFrame({"f1": [1, 2, 3]})
+    report.feature_psi_.fit(df_ref, ["f1"])
+    results = report.generate(df_ref, features=["f1"])
+    assert not results.empty
+
+
+def test_stability_report_monitor_status():
+    report = StabilityReport()
+    report.results_["data"] = pd.DataFrame(
+        [{"type": "feature", "name": "f1", "psi": 0.15, "status": "Monitor"}]
+    )
+    summary = report.summary()
+    assert summary["overall_status"] == "Monitor"
+
+
+def test_stability_report_run_exception_handling():
+    # Trigger exception in run
+    report = StabilityReport()
+    # No fit, so transform will fail for ModelPSI
+    # But it catches (ValueError, KeyError)
+    df = pd.DataFrame({"score": [1, 2, 3]})
+    results = report.run(df, score_col="score")
+    # Should not crash, and results should be empty or not contain "score"
+    if not results.empty:
+        assert "score" not in results["name"].values
+    else:
+        assert results.empty
+
+
+def test_stability_report_run_exception_trigger():
+    report = StabilityReport()
+    # Mock score_psi_.transform to raise ValueError
+    from unittest.mock import MagicMock
+
+    report.score_psi_.transform = MagicMock(side_effect=ValueError("Test Error"))
+    df = pd.DataFrame({"score": [1, 2, 3]})
+    results = report.run(df, score_col="score")
+    # This should hit the 'except' block in run()
+    assert "score" not in results["name"].values if not results.empty else True

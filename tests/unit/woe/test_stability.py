@@ -197,3 +197,19 @@ def test_auto_group_mixed_numeric_and_string():
     result = mapper.auto_group(matrix, min_groups=1, is_ordered=True)
 
     assert "A" in result
+
+
+def test_category_mapper_greedy_fallback():
+    from pandas.errors import PerformanceWarning
+
+    # Create 16 categories to trigger greedy (limit is 15)
+    cols = [str(i) for i in range(16)]
+    data = {c: [float(i), float(i)] for i, c in enumerate(cols)}
+    matrix = pd.DataFrame(data, index=["s1", "s2"])
+
+    mapper = CategoryMapper()
+    # Trigger greedy
+    with pytest.warns(PerformanceWarning, match="Falling back to greedy"):
+        result = mapper.auto_group(matrix, min_groups=2)
+
+    assert len(set(result.values())) >= 2

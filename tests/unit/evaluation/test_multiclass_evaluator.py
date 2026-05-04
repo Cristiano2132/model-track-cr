@@ -153,15 +153,15 @@ def test_multiclass_evaluator_report_with_scores():
     """Test report with score_cols to cover log_loss branch."""
     df = pd.DataFrame(
         {
-            "target": [0, 1, 2, 0, 1, 2],
-            "p0": [1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-            "p1": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-            "p2": [0.0, 0.0, 1.0, 0.0, 0.0, 1.0],
+            "target": ["A", "B", "C", "A", "B", "C"],
+            "A": [1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+            "B": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+            "C": [0.0, 0.0, 1.0, 0.0, 0.0, 1.0],
             "month": ["jan", "jan", "jan", "feb", "feb", "feb"],
         }
     )
     evaluator = MulticlassEvaluator()
-    report = evaluator.report(df, target="target", score_cols=["p0", "p1", "p2"], date_col="month")
+    report = evaluator.report(df, target="target", score_cols=["A", "B", "C"], date_col="month")
     assert "log_loss" in report.columns
 
 

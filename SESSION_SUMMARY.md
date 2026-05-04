@@ -14,8 +14,10 @@
     - Heatmap visual (`plot_drift_heatmap`) e checks de saúde (`is_healthy`).
     - `ModelPSI` especializado para scores com suporte a deciles fixos.
     - Cobertura de testes atingiu 98.83% global (90%+ nos arquivos novos).
-    - PR #69, #70 mergeados e PR #71 aberto.
-    - Issue #50, #45 e #46 fechadas.
+    - PR #69, #70, #71 mergeados e PR #72 aberto.
+    - Issue #50, #45, #46 e #49 fechadas.
+    - **100% de cobertura** atingida no módulo `evaluation` (Issue #47).
+    - Testes estatísticos e de integração adicionados.
 - **Em curso / bloqueado:** Nenhum. Milestone 3 concluído.
 
 ## Decisões importantes
@@ -39,8 +41,9 @@
 
 ## Próximos passos
 
-1. Merge do PR #71.
-2. Expandir documentação de visualização no `README.md`.
+1. Merge do PR #72.
+2. Iniciar Milestone 4: Implementar `QuantileBinner` (Issue #51).
+3. Expandir documentação de visualização no `README.md`.
 
 ## Notas para o agente
 

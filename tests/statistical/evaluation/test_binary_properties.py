@@ -14,6 +14,7 @@ from model_track.evaluation import BinaryEvaluator
     seed=st.integers(min_value=0, max_value=9999),
 )
 @settings(max_examples=50)
+@pytest.mark.filterwarnings("ignore:ks_2samp:RuntimeWarning")
 def test_auc_always_in_bounds(n: int, seed: int) -> None:
     """AUC must always be in [0.0, 1.0]."""
     rng = np.random.default_rng(seed)
@@ -32,6 +33,7 @@ def test_auc_always_in_bounds(n: int, seed: int) -> None:
     seed=st.integers(min_value=0, max_value=9999),
 )
 @settings(max_examples=50)
+@pytest.mark.filterwarnings("ignore:ks_2samp:RuntimeWarning")
 def test_ks_always_in_bounds(n: int, seed: int) -> None:
     """KS statistic must always be in [0.0, 1.0]."""
     rng = np.random.default_rng(seed)
@@ -49,6 +51,7 @@ def test_ks_always_in_bounds(n: int, seed: int) -> None:
     seed=st.integers(min_value=0, max_value=9999),
 )
 @settings(max_examples=50)
+@pytest.mark.filterwarnings("ignore:ks_2samp:RuntimeWarning")
 def test_gini_equals_2auc_minus_1(n: int, seed: int) -> None:
     """Gini must always equal 2*AUC - 1."""
     rng = np.random.default_rng(seed)
@@ -66,6 +69,7 @@ def test_gini_equals_2auc_minus_1(n: int, seed: int) -> None:
     seed=st.integers(min_value=0, max_value=9999),
 )
 @settings(max_examples=50)
+@pytest.mark.filterwarnings("ignore:ks_2samp:RuntimeWarning")
 def test_brier_score_always_in_bounds(n: int, seed: int) -> None:
     """Brier score must always be in [0.0, 1.0]."""
     rng = np.random.default_rng(seed)
