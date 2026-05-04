@@ -17,6 +17,8 @@
 ## Related
 - **Issue**: #
 - **Milestone**: 
+- **Project**: 
+- **Labels**: 
 
 ## Checklist
 - [ ] Title follows `type(scope): short description`

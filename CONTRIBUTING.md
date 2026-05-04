@@ -35,6 +35,7 @@ Antes de abrir um Pull Request para qualquer refatoração ou nova funcionalidad
 2. **Defesa em Profundidade**: Se o código roda mas o resultado matemático é duvidoso (ex: IV negativo), o teste deve falhar.
 3. **Documentação**: Atualize os docstrings (padrão Google/NumPy) e o `README.md` se a API pública for alterada.
 4. **GitFlow**: Trabalhe sempre em branches de `feature/` ou `refactor/` a partir da `develop`.
+5. **PR Metadata**: Todo Pull Request deve obrigatoriamente estar vinculado a um **Projeto**, possuir a **Milestone** correspondente e os **Labels** de tipo/módulo.
 
 ---
 
