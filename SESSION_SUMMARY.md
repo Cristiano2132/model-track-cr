@@ -4,48 +4,46 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-04 18:05:00
-- **Objetivo original:** Milestone 4 - Implementar QuantileBinner e BinApplier.
+- **Data / hora:** 2026-05-04 18:42:00
+- **Objetivo original:** Milestone 5 - Iniciar Suporte Multiclass e Revisão de Skills.
 
 ## Estado atual
 
 - **Feito:**
-    - `StabilityReport` implementado com orquestração feature + score drift.
-    - Heatmap visual (`plot_drift_heatmap`) e checks de saúde (`is_healthy`).
-    - `ModelPSI` especializado para scores com suporte a deciles fixos.
-    - Cobertura de testes atingiu 98.83% global (90%+ nos arquivos novos).
+    - `OvRWoeAdapter` implementado: suporte a WoE multiclass via One-vs-Rest (OvR).
+    - Estratégias de transformação: `per_class` (todas as classes) e `max_iv` (classe dominante).
+    - `iv_summary()` fornecendo métricas de informação por par classe/feature.
+    - Cobertura global de testes: **99.73%** (100% nos novos arquivos).
 - **Concluído nesta sessão:**
-    - `QuantileBinner` e `BinApplier` implementados e mergeados (PR #75).
-    - `StabilityReport` refatorado para reduzir complexidade cognitiva (SonarCloud fix).
-    - Milestone M4 (Binning Expansion) concluída.
-    - Política **Flash-first** implementada no `ResourceGuard`.
-- **Em curso / bloqueado:** Nenhum. Ciclo M4 finalizado.
+    - **Issue #52:** `OvRWoeAdapter` implementado, testado e mergeado (PR #76).
+    - **ResourceGuard:** Skill reescrita para ser honesta sobre limitações técnicas e focar em recomendação ao usuário.
+    - **GEMINI.md:** Regras globais alinhadas com o novo protocolo Flash-first.
+- **Em curso / bloqueado:** Nenhum. Início da Milestone 5 (Multiclass) validado.
 
 ## Decisões importantes
 
-- **Isolamento de Contexto:** Adicionada cópia profunda (`.copy()`) ao carregar `reference_stats` do `ProjectContext` para evitar efeitos colaterais entre calculadores de feature e score.
-- **Lazy Visual Imports:** Imports de `seaborn` e `matplotlib` movidos para dentro dos métodos de plotagem para facilitar instalação mínima e evitar erros de tipagem global no MyPy.
-- **Robustez de Fallback:** `PSICalculator.from_context` agora inicializa com `{}` em vez de `None` para evitar `AttributeError` em contextos sem estatísticas.
-- **Validação de Target:** Evaluator lança `ValueError` se o target for binário, direcionando o usuário para o `BinaryEvaluator`.
-- **MAPE Robustez:** Filtro e warning para zeros no target de regressão para evitar divisões por zero ou resultados infinitos sem aviso.
+- **Design de Adapter:** Optado por não alterar o `WoeCalculator` original para manter retrocompatibilidade. O `OvRWoeAdapter` encapsula a orquestração e o cálculo de IV.
+- **Laplace Smoothing:** Mantida consistência com o `WoeCalculator` usando `+ 0.5` no cálculo manual de IV dentro do adapter.
+- **Protocolo de Cota:** Removida linguagem de "Roteamento Automático" das skills para evitar falsas expectativas. Agora o agente recomenda e o usuário troca.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/binning/quantile_binner.py` | [NEW] Binagem baseada em quantis. |
-| `src/model_track/binning/bin_applier.py` | [NEW] Utilitário para aplicação consistente de bins. |
-| `src/model_track/stability/report.py` | [REFACTOR] Redução de complexidade cognitiva. |
-| `tests/unit/binning/` | Novas suítes unitárias (100% cobertura). |
-| `tests/integration/test_binning_context.py` | Teste de workflow completo com contexto. |
+| `src/model_track/woe/ovr_adapter.py` | [NEW] Adapter WoE Multiclass via One-vs-Rest. |
+| `tests/unit/woe/test_ovr_adapter.py` | [NEW] 18 testes unitários para o adapter. |
+| `tests/integration/test_multiclass_pipeline.py` | [NEW] Fluxo completo com MulticlassEvaluator. |
+| `~/.gemini/antigravity/skills/resource-guard/SKILL.md` | [REWRITE] Novo protocolo de custo honesto. |
+| `~/.gemini/GEMINI.md` | [FIX] Alinhamento do resumo ResourceGuard. |
 
 ## Próximos passos
 
-1. Iniciar Milestone 5: Implementar WOE Incremental ou Categorical Encoding (definir prioridade).
-2. Expandir documentação de binagem no `README.md`.
+1. **Issue #53:** Implementar `MulticlassSelector` (seleção de features baseada em OvR IV).
+2. **Issue #54:** Criar notebook de exemplo end-to-end multiclass.
+3. **Issue #55:** Implementar `RegressionSelector` (Pearson/Spearman + VIF).
 
 ## Notas para o agente
 
-- **Rito de Tarefa:** Seguir rigorosamente o workflow de planejamento → branch → commits → audit.
-- **Dependências:** `seaborn` e `matplotlib` são opcionais (`[viz]`).
-- **Tests:** `make test` executa a suíte completa com cobertura.
+- **Rito de Custo:** Use Flash para ritos (close, summary). Recomende Sonnet para o design da Issue #53.
+- **Tests:** `make test` agora cobre 199 testes. Manter cobertura > 90%.
+- **Multiclass:** Sempre usar `TaskType.MULTICLASS` no `ProjectContext` para estas tarefas.
