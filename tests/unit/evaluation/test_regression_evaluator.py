@@ -91,3 +91,50 @@ def test_regression_evaluator_residual_plot():
     returned_ax = evaluator.residual_plot(y_true, y_pred, ax=ax)
     assert returned_ax is ax
     plt.close(fig)
+
+
+def test_regression_evaluator_report_global():
+    """Test report without date_col."""
+    df = pd.DataFrame({"target": [1.0, 2.0, 3.0], "pred": [1.1, 1.9, 3.1]})
+    evaluator = RegressionEvaluator()
+    report = evaluator.report(df, target="target", pred_col="pred")
+    assert len(report) == 1
+    assert report.loc[0, "period"] == "overall"
+
+
+def test_regression_evaluator_report_empty():
+    """Test report with empty data."""
+    df = pd.DataFrame(columns=["target", "pred", "month"])
+    evaluator = RegressionEvaluator()
+    report = evaluator.report(df, target="target", pred_col="pred", date_col="month")
+    assert len(report) == 0
+
+
+def test_regression_evaluator_report_empty_categorical():
+    """Test report with empty categorical group."""
+    df = pd.DataFrame(
+        {
+            "target": [1.0, 2.0],
+            "pred": [1.1, 1.9],
+            "month": pd.Categorical(["jan", "jan"], categories=["jan", "feb"]),
+        }
+    )
+    evaluator = RegressionEvaluator()
+    # groupby with categorical and observed=False (default in some versions) can produce empty groups
+    # We force it by filtering or just ensuring the branch is hit if possible
+    report = evaluator.report(df, target="target", pred_col="pred", date_col="month")
+    # In some pandas versions, 'feb' might show up with 0 rows
+    assert "jan" in report["period"].values
+
+
+def test_regression_evaluator_residual_plot_no_ax():
+    """Test residual_plot without providing an Axes object."""
+    evaluator = RegressionEvaluator()
+    y_true = pd.Series([1.0, 2.0])
+    y_pred = pd.Series([1.1, 1.9])
+
+    ax = evaluator.residual_plot(y_true, y_pred)
+    assert ax is not None
+    import matplotlib.pyplot as plt
+
+    plt.close(ax.figure)
