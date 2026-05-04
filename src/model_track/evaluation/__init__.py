@@ -23,5 +23,13 @@ Example:
 from model_track.evaluation.base import BaseEvaluator
 from model_track.evaluation.binary import BinaryEvaluator
 from model_track.evaluation.decision_table import DecisionTable
+from model_track.evaluation.multiclass import MulticlassEvaluator
+from model_track.evaluation.regression import RegressionEvaluator
 
-__all__ = ["BaseEvaluator", "BinaryEvaluator", "DecisionTable"]
+__all__ = [
+    "BaseEvaluator",
+    "BinaryEvaluator",
+    "DecisionTable",
+    "MulticlassEvaluator",
+    "RegressionEvaluator",
+]

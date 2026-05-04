@@ -51,10 +51,29 @@ The CI skips `CVE‑2026‑4539`.
 The README contains the full library overview and usage examples.
 For contribution guidelines and the mandatory testing checklist, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### GitHub Closing Protocol (Mandatory)
-Ao finalizar uma tarefa:
-1. **Atualizar Issue**: Marcar todos os checkboxes de critérios de aceitação.
-2. **Comentar**: Adicionar observações técnicas finais na Issue.
-3. **Fechar/Mover**: Fechar a Issue ou mover para "Done".
-4. **Cleanup**: Perguntar ao usuário se deve excluir a branch temporária (local e origin).
+### Workflows de Issue (Mandatory)
+
+Use os workflows automatizados abaixo para garantir o rito completo:
+
+| Slash Command | Quando usar | Arquivo |
+|---|---|---|
+| `/issue-start <number>` | Ao iniciar qualquer issue | `.agent/workflows/issue-start.md` |
+| `/issue-close <issue> <pr>` | Após merge de um PR | `.agent/workflows/issue-close.md` |
+
+### Pull Request Protocol (Mandatory)
+
+Ao criar um Pull Request, é **obrigatório** garantir que os seguintes metadados estejam configurados:
+- **Projeto**: Associar ao projeto correto do repositório.
+- **Milestone**: Deve corresponder à milestone definida na issue original.
+- **Labels**: Adicionar labels de tipo (ex: `type: feature`, `type: bug`) e módulo (ex: `module: stats`).
+
+**Fluxo completo:**
+```
+/issue-start 46   →  branch criada, plano aprovado, implementação
+                  →  commits incrementais durante o trabalho
+                  →  PR criado com **Projeto**, **Milestone** e **Labels** configurados.
+/issue-close 46 71 →  checkboxes, labels, comentário, branch cleanup
+```
+
+> Não execute estes passos manualmente. Use sempre os workflows acima para garantir consistência.
 

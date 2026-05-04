@@ -113,10 +113,40 @@ class PSICalculator:
     @classmethod
     def from_context(cls, ctx: ProjectContext) -> "PSICalculator":
         """Load reference stats from a ProjectContext."""
-        instance = cls()
-        instance.reference_stats_ = getattr(ctx, "reference_stats", {})
-        return instance
+        calc = cls()
+        ref_stats = getattr(ctx, "reference_stats", None) or {}
+        calc.reference_stats_ = ref_stats.copy()
+        return calc
 
     def to_context(self, ctx: ProjectContext) -> None:
         """Save reference stats to a ProjectContext."""
         ctx.reference_stats = self.reference_stats_
+
+
+class ModelPSI(PSICalculator):
+    """
+    Specialized PSI Calculator for model scores/probabilities.
+    Focuses on a single score column and typically uses fixed deciles.
+    """
+
+    def __init__(self, n_bins: int = 10, epsilon: float = 1e-6):
+        super().__init__(n_bins=n_bins, epsilon=epsilon)
+        self.score_col_: str | None = None
+
+    def fit(self, df: pd.DataFrame, score_col: str) -> "ModelPSI":  # type: ignore[override]
+        """Learn reference distribution for the score column."""
+        self.score_col_ = score_col
+        super().fit(df, [score_col])
+        return self
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate PSI for the score column."""
+        if self.score_col_ is None:
+            raise ValueError("ModelPSI must be fitted or loaded from context first.")
+        return super().transform(df)
+
+    def get_psi(self) -> float:
+        """Returns the scalar PSI value for the score."""
+        if not self.psi_results_ or self.score_col_ not in self.psi_results_:
+            return 0.0
+        return self.psi_results_[self.score_col_]
