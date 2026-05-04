@@ -224,14 +224,12 @@ class CategoryMapper:
     ) -> dict[str, str]:
         """
         Heuristic: Iteratively split groups to find a good partition in O(n^2).
-        Useful when number of categories is too large for exhaustive search.
         """
         categories = stability_matrix.columns.tolist()
         n = len(categories)
         global_woe = stability_matrix.mean()
         sorted_cats = self._get_sorted_categories(categories, global_woe, is_ordered)
 
-        # Initial state: one group containing all sorted categories
         best_overall_partition: list[list[str]] = [sorted_cats]
         best_overall_score: tuple[float, float, float] = self._score_partition(
             best_overall_partition, stability_matrix, global_woe, 1
@@ -239,42 +237,50 @@ class CategoryMapper:
 
         current_partition = [sorted_cats]
 
-        # Greedy expansion up to n groups
         for k in range(2, n + 1):
-            best_k_score: tuple[float, float, float] = (float("inf"), float("inf"), float("inf"))
-            best_k_partition: list[list[str]] | None = None
-
-            # Try splitting each existing group into two
-            for i, group in enumerate(current_partition):
-                if len(group) < 2:
-                    continue
-
-                # Try all possible split points within this group
-                for split_idx in range(1, len(group)):
-                    new_partition = (
-                        current_partition[:i]
-                        + [group[:split_idx], group[split_idx:]]
-                        + current_partition[i + 1 :]
-                    )
-
-                    score = self._score_partition(new_partition, stability_matrix, global_woe, k)
-
-                    if score < best_k_score:
-                        best_k_score = score
-                        best_k_partition = new_partition
+            best_k_score, best_k_partition = self._find_best_split_for_group(
+                current_partition, stability_matrix, global_woe, k
+            )
 
             if best_k_partition is None:
                 break
 
             current_partition = best_k_partition
 
-            # If we reached min_groups, start tracking the overall best
-            if k >= min_groups:
-                if best_k_score < best_overall_score:
-                    best_overall_score = best_k_score
-                    best_overall_partition = current_partition
+            if k >= min_groups and best_k_score < best_overall_score:
+                best_overall_score = best_k_score
+                best_overall_partition = current_partition
 
         return self._generate_intelligent_names(best_overall_partition, categories)
+
+    def _find_best_split_for_group(
+        self,
+        current_partition: list[list[str]],
+        stability_matrix: pd.DataFrame,
+        global_woe: pd.Series,
+        k: int,
+    ) -> tuple[tuple[float, float, float], list[list[str]] | None]:
+        """Find the best split point within any group in the current partition."""
+        best_k_score: tuple[float, float, float] = (float("inf"), float("inf"), float("inf"))
+        best_k_partition: list[list[str]] | None = None
+
+        for i, group in enumerate(current_partition):
+            if len(group) < 2:
+                continue
+
+            for split_idx in range(1, len(group)):
+                new_partition = (
+                    current_partition[:i]
+                    + [group[:split_idx], group[split_idx:]]
+                    + current_partition[i + 1 :]
+                )
+                score = self._score_partition(new_partition, stability_matrix, global_woe, k)
+
+                if score < best_k_score:
+                    best_k_score = score
+                    best_k_partition = new_partition
+
+        return best_k_score, best_k_partition
 
     def auto_group(
         self,
