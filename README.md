@@ -142,7 +142,7 @@ This step typically informs:
 
 Responsible for turning continuous inputs into ordered categories for WoE and stability workflows.
 
-**Currently exported:** supervised **tree-based** binning (`TreeBinner`). Quantile binning and a dedicated “bin applier” helper are **not** in the package yet; they are listed under [Technical roadmap](#technical-roadmap).
+**Exported binners:** supervised **tree-based** binning (`TreeBinner`), unsupervised **quantile** binning (`QuantileBinner`), and `BinApplier` to consistently apply saved bins to new datasets.
 
 Example:
 
@@ -254,6 +254,12 @@ This project uses Git Flow, GitHub Issues, and Pull Requests. Day-to-day command
 ## Documentation in this repository
 
 Right now, the main narrative lives in this README (EN / PT-BR) plus the testing strategy linked above. Docstrings in `src/model_track` are the API reference. Deeper per-module guides and an end-to-end modeling walkthrough can be added as the surface area grows.
+
+### 📓 Example Notebooks
+
+| Notebook | Description |
+|----------|-------------|
+| [`notebooks/multiclass_example.ipynb`](notebooks/multiclass_example.ipynb) | End-to-end multiclass pipeline: Wine dataset → binning → `MulticlassSelector` → `OvRWoeAdapter` → LightGBM → `MulticlassEvaluator` → `ProjectContext`. |
 
 ---
 

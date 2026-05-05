@@ -4,46 +4,43 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-04 18:42:00
+- **Data / hora:** 2026-05-04 23:10:00
 - **Objetivo original:** Milestone 5 - Iniciar Suporte Multiclass e Revisão de Skills.
 
 ## Estado atual
 
 - **Feito:**
     - `OvRWoeAdapter` implementado: suporte a WoE multiclass via One-vs-Rest (OvR).
-    - Estratégias de transformação: `per_class` (todas as classes) e `max_iv` (classe dominante).
-    - `iv_summary()` fornecendo métricas de informação por par classe/feature.
-    - Cobertura global de testes: **99.73%** (100% nos novos arquivos).
+    - `MulticlassSelector` implementado: seleção de features com estratégias `max`, `mean` e `all` baseadas em OvR IV.
+    - Filtro de correlação Cramer's V integrado ao seletor multiclasse.
+    - Cobertura de testes para novos módulos: **95%+**.
 - **Concluído nesta sessão:**
-    - **Issue #52:** `OvRWoeAdapter` implementado, testado e mergeado (PR #76).
-    - **ResourceGuard:** Skill reescrita para ser honesta sobre limitações técnicas e focar em recomendação ao usuário.
-    - **GEMINI.md:** Regras globais alinhadas com o novo protocolo Flash-first.
-- **Em curso / bloqueado:** Nenhum. Início da Milestone 5 (Multiclass) validado.
+    - **Issue #52:** `OvRWoeAdapter` (PR #76).
+    - **Issue #53:** `MulticlassSelector` (PR #77).
+    - **ResourceGuard:** Atualizado para o protocolo "Stop & Recommend".
+- **Em curso / bloqueado:** Nenhum. Início da Milestone 5 segue em ritmo acelerado.
 
 ## Decisões importantes
 
-- **Design de Adapter:** Optado por não alterar o `WoeCalculator` original para manter retrocompatibilidade. O `OvRWoeAdapter` encapsula a orquestração e o cálculo de IV.
-- **Laplace Smoothing:** Mantida consistência com o `WoeCalculator` usando `+ 0.5` no cálculo manual de IV dentro do adapter.
-- **Protocolo de Cota:** Removida linguagem de "Roteamento Automático" das skills para evitar falsas expectativas. Agora o agente recomenda e o usuário troca.
+- **Estratégias de Seleção:** Implementadas 3 variantes (`max`, `mean`, `all`) para dar flexibilidade ao cientista de dados dependendo da severidade desejada no filtro OvR.
+- **Protocolo ResourceGuard:** Mudança para "Stop & Recommend" para garantir que o usuário tenha controle total sobre a troca de modelos entre tarefas analíticas e mecânicas.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/woe/ovr_adapter.py` | [NEW] Adapter WoE Multiclass via One-vs-Rest. |
-| `tests/unit/woe/test_ovr_adapter.py` | [NEW] 18 testes unitários para o adapter. |
-| `tests/integration/test_multiclass_pipeline.py` | [NEW] Fluxo completo com MulticlassEvaluator. |
-| `~/.gemini/antigravity/skills/resource-guard/SKILL.md` | [REWRITE] Novo protocolo de custo honesto. |
-| `~/.gemini/GEMINI.md` | [FIX] Alinhamento do resumo ResourceGuard. |
+| `src/model_track/stats/multiclass_selection.py` | [NEW] Seletor de features para tarefas multiclasse. |
+| `tests/unit/stats/test_multiclass_selector.py` | [NEW] Testes unitários para o novo seletor. |
+| `src/model_track/stats/__init__.py` | Exportação do `MulticlassSelector`. |
+| `~/.gemini/antigravity/skills/resource-guard/SKILL.md` | [UPDATE] Novo protocolo Stop & Recommend. |
 
 ## Próximos passos
 
-1. **Issue #53:** Implementar `MulticlassSelector` (seleção de features baseada em OvR IV).
-2. **Issue #54:** Criar notebook de exemplo end-to-end multiclass.
-3. **Issue #55:** Implementar `RegressionSelector` (Pearson/Spearman + VIF).
+1. **Issue #54:** Criar notebook de exemplo end-to-end multiclass.
+2. **Issue #55:** Implementar `RegressionSelector` (Pearson/Spearman + VIF).
 
 ## Notas para o agente
 
-- **Rito de Custo:** Use Flash para ritos (close, summary). Recomende Sonnet para o design da Issue #53.
-- **Tests:** `make test` agora cobre 199 testes. Manter cobertura > 90%.
-- **Multiclass:** Sempre usar `TaskType.MULTICLASS` no `ProjectContext` para estas tarefas.
+- **Rito de Custo:** Use Flash para ritos. Pare e recomende Sonnet para tarefas de design de código ou notebooks complexos.
+- **Tests:** Garantir que o novo notebook use dados sintéticos representativos para multiclasse.
+- **Multiclass:** Continuar seguindo o padrão de nomenclatura `{col}_woe_{class}` quando aplicável.
