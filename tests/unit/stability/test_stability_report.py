@@ -207,3 +207,37 @@ def test_stability_report_multiclass_with_context():
     assert len(results) == 2
     assert "proba_A" in results["name"].values
     assert "proba_B" in results["name"].values
+
+
+def test_stability_report_regression():
+    """Test StabilityReport regression integration with ProjectContext."""
+    from model_track.base import TaskType
+
+    ctx = ProjectContext()
+    ctx.task_type = TaskType.REGRESSION
+
+    df_ref = pd.DataFrame({"score": [10.5, 12.1, 15.3, 14.2], "f1": [1, 2, 3, 4]})
+
+    # Save to context
+    from model_track.stability import PSICalculator, RegressionPSI
+
+    psi_calc = PSICalculator().fit(df_ref, ["f1"])
+    rpsi = RegressionPSI().fit(df_ref, "score")
+
+    ctx.reference_stats = {}
+    ctx.reference_stats.update(psi_calc.reference_stats_)
+    ctx.reference_stats.update(rpsi.reference_stats_)
+
+    report = StabilityReport(context=ctx)
+    df_cur = pd.DataFrame({"score": [10.2, 12.5, 15.0, 14.1], "f1": [1, 2, 3, 4]})
+
+    results = report.run(df_cur, features=["f1"], score_col="score")
+
+    assert len(results) == 2
+    assert "score" in results["name"].values
+    assert "f1" in results["name"].values
+
+    # Verify the report indeed used the RegressionPSI instance
+    # The reference stats should be loaded into regression_psi_
+    assert report.regression_psi_.score_col_ == "score"
+    assert report.regression_psi_.get_psi() >= 0

@@ -196,3 +196,12 @@ class MulticlassPSI(PSICalculator):
     def get_psi_dict(self) -> dict[str, float]:
         """Returns the scalar PSI values for all monitored columns."""
         return self.psi_results_.copy()
+
+
+class RegressionPSI(ModelPSI):
+    """
+    Specialized PSI Calculator for regression models.
+    Monitors stability of continuous predicted values.
+    """
+
+    pass
