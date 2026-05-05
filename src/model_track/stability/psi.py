@@ -150,3 +150,49 @@ class ModelPSI(PSICalculator):
         if not self.psi_results_ or self.score_col_ not in self.psi_results_:
             return 0.0
         return self.psi_results_[self.score_col_]
+
+
+class MulticlassPSI(PSICalculator):
+    """
+    Specialized PSI Calculator for multiclass models.
+    Monitors stability of both predicted class probabilities and hard predictions.
+    """
+
+    def __init__(self, n_bins: int = 10, epsilon: float = 1e-6):
+        super().__init__(n_bins=n_bins, epsilon=epsilon)
+        self.proba_cols_: list[str] = []
+        self.pred_col_: str | None = None
+
+    def fit(
+        self,
+        df: pd.DataFrame,
+        proba_cols: list[str],
+        pred_col: str | None = None,
+    ) -> "MulticlassPSI":
+        """
+        Learn reference distributions for class probabilities and (optionally) hard predictions.
+
+        Args:
+            df: Reference DataFrame (e.g., training data).
+            proba_cols: List of column names containing class probabilities.
+            pred_col: Optional column name containing hard class predictions.
+        """
+        self.proba_cols_ = proba_cols
+        self.pred_col_ = pred_col
+
+        features = proba_cols.copy()
+        if pred_col:
+            features.append(pred_col)
+
+        super().fit(df, features)
+        return self
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate PSI for all monitored columns."""
+        if not self.proba_cols_:
+            raise ValueError("MulticlassPSI must be fitted or loaded from context first.")
+        return super().transform(df)
+
+    def get_psi_dict(self) -> dict[str, float]:
+        """Returns the scalar PSI values for all monitored columns."""
+        return self.psi_results_.copy()
