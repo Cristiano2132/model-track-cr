@@ -2,8 +2,9 @@ from typing import Any
 
 import pandas as pd
 
+from ..base import TaskType
 from ..context import ProjectContext
-from .psi import ModelPSI, MulticlassPSI, PSICalculator
+from .psi import ModelPSI, MulticlassPSI, PSICalculator, RegressionPSI
 
 
 class StabilityReport:
@@ -24,6 +25,7 @@ class StabilityReport:
         self.feature_psi_ = PSICalculator()
         self.score_psi_ = ModelPSI()
         self.multiclass_psi_ = MulticlassPSI()
+        self.regression_psi_ = RegressionPSI()
         self.results_: dict[str, Any] = {}
 
         if context:
@@ -135,14 +137,17 @@ class StabilityReport:
             except (ValueError, KeyError):
                 pass
         else:
-            self.score_psi_.score_col_ = score_col
-            if not self.score_psi_.reference_stats_ and self.context:
+            is_regression = self.context and self.context.task_type == TaskType.REGRESSION
+            calc = self.regression_psi_ if is_regression else self.score_psi_
+
+            calc.score_col_ = score_col
+            if not calc.reference_stats_ and self.context:
                 ctx_stats = getattr(self.context, "reference_stats", {})
                 if score_col in ctx_stats:
-                    self.score_psi_.reference_stats_ = {score_col: ctx_stats[score_col]}
+                    calc.reference_stats_ = {score_col: ctx_stats[score_col]}
 
             try:
-                score_summary = self.score_psi_.transform(df)
+                score_summary = calc.transform(df)
                 for _, row in score_summary.iterrows():
                     report_data.append(
                         {
