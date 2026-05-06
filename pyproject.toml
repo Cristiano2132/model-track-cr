@@ -1,6 +1,6 @@
 [project]
 name = "model-track-cr"
-version = "0.1.0"
+version = "1.1.0"
 description = "Feature selection and model monitoring toolkit for credit and risk modeling."
 authors = [
     { name = "Cristiano", email = "cristiano2132.ufv@gmail.com" }
