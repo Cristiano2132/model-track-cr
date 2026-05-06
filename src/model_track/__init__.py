@@ -18,7 +18,7 @@ Example:
     >>> df_selected = selector.fit_transform(df, target="target", features=df.columns)
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 from model_track.base import (
     BaseTransformer,
