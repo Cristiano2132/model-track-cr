@@ -221,7 +221,7 @@ class StabilityReport:
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "Seaborn/Matplotlib required for plotting. Install with [viz] extra."
             ) from None
