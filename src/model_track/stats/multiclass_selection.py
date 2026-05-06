@@ -51,17 +51,7 @@ class MulticlassSelector(BaseTransformer):
             MulticlassSelector: Fitted instance.
         """
         features = features or []
-        df_sample = df
-
-        if self.sample_size and len(df) > self.sample_size:
-            frac = self.sample_size / len(df)
-            df_sample = pd.concat(
-                [
-                    g.sample(frac=frac, random_state=42)
-                    for _, g in df.groupby(target, observed=True, sort=False)
-                ],
-                axis=0,
-            )
+        df_sample = self._sample_data(df, target)
 
         valid_features = [f for f in features if f in df_sample.columns]
         if not valid_features:
@@ -69,47 +59,79 @@ class MulticlassSelector(BaseTransformer):
             self.dropped_features_ = []
             return self
 
-        # 1. Compute OvR IV
-        adapter = OvRWoeAdapter(classes=self.classes)
-        adapter.fit(df_sample, target=target, columns=valid_features)
-        summary = adapter.iv_summary()
+        summary = self._compute_iv_summary(df_sample, target, valid_features)
+        strong_features = self._filter_by_iv(valid_features, summary)
+        selected = self._filter_by_cramers_v(df_sample, strong_features)
 
-        strong_features = []
-        for feat in valid_features:
-            ivs = [summary.loc[feat, f"iv_{c}"] for c in self.classes]
-
-            if self.iv_strategy == "max":
-                pass_iv = max(ivs) >= self.iv_threshold
-            elif self.iv_strategy == "mean":
-                pass_iv = float(np.mean(ivs)) >= self.iv_threshold
-            else:  # "all"
-                pass_iv = all(iv >= self.iv_threshold for iv in ivs)
-
-            if pass_iv:
-                strong_features.append(feat)
-
-        # 2. Sort by max_iv (higher IV "wins" in correlation filter)
-        strong_features.sort(key=lambda x: float(summary.loc[x, "max_iv"]), reverse=True)
-
-        # 3. Correlation Filter (Cramer's V)
-        to_drop_corr = set()
-        for i, f1 in enumerate(strong_features):
-            if f1 in to_drop_corr:
-                continue
-            for f2 in strong_features[i + 1 :]:
-                if f2 in to_drop_corr:
-                    continue
-                v = compute_cramers_v(df_sample, f1, f2)
-                if v > self.cramers_threshold:
-                    to_drop_corr.add(f2)
-
-        self.selected_features_ = [f for f in strong_features if f not in to_drop_corr]
-        self.dropped_features_ = [f for f in valid_features if f not in self.selected_features_]
-
-        # Store for summary
+        self.selected_features_ = selected
+        self.dropped_features_ = [f for f in valid_features if f not in selected]
         self.iv_results_ = summary.to_dict(orient="index")
 
         return self
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _sample_data(self, df: pd.DataFrame, target: str) -> pd.DataFrame:
+        """Stratified sample if data exceeds sample_size."""
+        if self.sample_size and len(df) > self.sample_size:
+            frac = self.sample_size / len(df)
+            return pd.concat(
+                [
+                    g.sample(frac=frac, random_state=42)
+                    for _, g in df.groupby(target, observed=True, sort=False)
+                ],
+                axis=0,
+            )
+        return df
+
+    def _compute_iv_summary(
+        self, df: pd.DataFrame, target: str, features: list[str]
+    ) -> pd.DataFrame:
+        """Fit OvR adapter and return IV summary."""
+        adapter = OvRWoeAdapter(classes=self.classes)
+        adapter.fit(df, target=target, columns=features)
+        return adapter.iv_summary()
+
+    def _passes_iv(self, ivs: list[float]) -> bool:
+        """Check if a feature's IV list passes the configured strategy."""
+        if self.iv_strategy == "max":
+            return max(ivs) >= self.iv_threshold
+        if self.iv_strategy == "mean":
+            return float(np.mean(ivs)) >= self.iv_threshold
+        # "all"
+        return all(iv >= self.iv_threshold for iv in ivs)
+
+    def _filter_by_iv(self, features: list[str], summary: pd.DataFrame) -> list[str]:
+        """Stage 1: Keep features that pass the IV threshold."""
+        strong = []
+        for feat in features:
+            ivs = [summary.loc[feat, f"iv_{c}"] for c in self.classes]
+            if self._passes_iv(ivs):
+                strong.append(feat)
+
+        # Sort by max_iv descending so strongest features survive correlation filter
+        strong.sort(key=lambda x: float(summary.loc[x, "max_iv"]), reverse=True)
+        return strong
+
+    def _filter_by_cramers_v(self, df: pd.DataFrame, features: list[str]) -> list[str]:
+        """Stage 2: Remove highly correlated features (Cramer's V) keeping highest IV."""
+        to_drop: set[str] = set()
+        for i, f1 in enumerate(features):
+            if f1 in to_drop:
+                continue
+            for f2 in features[i + 1 :]:
+                if f2 in to_drop:
+                    continue
+                if compute_cramers_v(df, f1, f2) > self.cramers_threshold:
+                    to_drop.add(f2)
+
+        return [f for f in features if f not in to_drop]
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Remove dropped features."""

@@ -7,7 +7,7 @@ try:
     import lightgbm as lgb
 
     HAS_LGBM = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_LGBM = False
 
 

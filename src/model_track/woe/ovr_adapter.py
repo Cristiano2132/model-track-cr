@@ -197,32 +197,40 @@ class OvRWoeAdapter:
         df_out = df.copy()
 
         if strategy == "per_class":
-            for cls in self.classes:
-                key = str(cls)
-                calc = self.calculators_[key]
-                # Transform produces {col}_woe columns; rename to {col}_woe_{k}
-                df_tmp = calc.transform(df_out, columns=columns)
-                for col in columns:
-                    src = f"{col}_woe"
-                    dst = f"{col}_woe_{key}"
-                    if src in df_tmp.columns:
-                        df_out[dst] = df_tmp[src]
-
-        else:  # "max_iv"
-            for col in columns:
-                # Pick the class with highest IV for this feature
-                best_cls = max(
-                    self.classes,
-                    key=lambda k: self.iv_per_class_.get(str(k), {}).get(col, 0.0),
-                )
-                key = str(best_cls)
-                calc = self.calculators_[key]
-                df_tmp = calc.transform(df_out, columns=[col])
-                src = f"{col}_woe"
-                if src in df_tmp.columns:
-                    df_out[src] = df_tmp[src]
+            df_out = self._transform_per_class(df_out, columns)
+        else:
+            df_out = self._transform_max_iv(df_out, columns)
 
         return df_out
+
+    def _transform_per_class(self, df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+        """Apply WoE for every class, producing one column per (class, feature) pair."""
+        for cls in self.classes:
+            key = str(cls)
+            calc = self.calculators_[key]
+            df_tmp = calc.transform(df, columns=columns)
+            for col in columns:
+                src = f"{col}_woe"
+                dst = f"{col}_woe_{key}"
+                if src in df_tmp.columns:
+                    df[dst] = df_tmp[src]
+        return df
+
+    def _transform_max_iv(self, df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+        """Apply WoE using, per feature, the class with the highest IV."""
+        for col in columns:
+
+            def get_iv(k: str | int, c: str = col) -> float:
+                return self.iv_per_class_.get(str(k), {}).get(c, 0.0)
+
+            best_cls = max(self.classes, key=get_iv)
+            key = str(best_cls)
+            calc = self.calculators_[key]
+            df_tmp = calc.transform(df, columns=[col])
+            src = f"{col}_woe"
+            if src in df_tmp.columns:
+                df[src] = df_tmp[src]
+        return df
 
     def iv_summary(self) -> pd.DataFrame:
         """Return a DataFrame summarising IV per class per feature.

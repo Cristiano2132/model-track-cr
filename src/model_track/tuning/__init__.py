@@ -12,7 +12,7 @@ __all__ = ["BaseTuner", "BayesianTuner", "LGBMTuner"]
 try:
     from model_track.tuning.bayesian import BayesianTuner
     from model_track.tuning.lgbm import LGBMTuner
-except ImportError:
+except ImportError:  # pragma: no cover
     # Fallback classes that raise error when instantiated
 
     class BayesianTuner:  # type: ignore

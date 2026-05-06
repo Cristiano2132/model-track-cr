@@ -11,7 +11,7 @@ try:
     from bayes_opt import BayesianOptimization
 
     HAS_BAYES = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_BAYES = False
 
 
