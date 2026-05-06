@@ -111,55 +111,58 @@ class StabilityReport:
         self, df: pd.DataFrame, score_col: str | list[str]
     ) -> list[dict[str, Any]]:
         """Calculate PSI for scores and format results."""
-        report_data = []
-
         if isinstance(score_col, list):
-            self.multiclass_psi_.proba_cols_ = score_col
-            if not self.multiclass_psi_.reference_stats_ and self.context:
-                ctx_stats = getattr(self.context, "reference_stats", {})
-                ref_stats = {}
-                for col in score_col:
-                    if col in ctx_stats:
-                        ref_stats[col] = ctx_stats[col]
-                self.multiclass_psi_.reference_stats_ = ref_stats
+            return self._handle_multiclass_score(df, score_col)
+        return self._handle_single_score(df, score_col)
 
-            try:
-                score_summary = self.multiclass_psi_.transform(df)
-                for _, row in score_summary.iterrows():
-                    report_data.append(
-                        {
-                            "type": "score",
-                            "name": row["feature"],
-                            "psi": row["psi"],
-                            "status": row["status"],
-                        }
-                    )
-            except (ValueError, KeyError):
-                pass
-        else:
-            is_regression = self.context and self.context.task_type == TaskType.REGRESSION
-            calc = self.regression_psi_ if is_regression else self.score_psi_
+    def _handle_multiclass_score(
+        self, df: pd.DataFrame, score_col: list[str]
+    ) -> list[dict[str, Any]]:
+        """Specific logic for multiclass proba columns."""
+        self.multiclass_psi_.proba_cols_ = score_col
+        if not self.multiclass_psi_.reference_stats_ and self.context:
+            self._load_multiclass_ref_stats(score_col)
 
-            calc.score_col_ = score_col
-            if not calc.reference_stats_ and self.context:
-                ctx_stats = getattr(self.context, "reference_stats", {})
-                if score_col in ctx_stats:
-                    calc.reference_stats_ = {score_col: ctx_stats[score_col]}
+        try:
+            score_summary = self.multiclass_psi_.transform(df)
+            return self._format_psi_results(score_summary, "score")
+        except (ValueError, KeyError):
+            return []
 
-            try:
-                score_summary = calc.transform(df)
-                for _, row in score_summary.iterrows():
-                    report_data.append(
-                        {
-                            "type": "score",
-                            "name": row["feature"],
-                            "psi": row["psi"],
-                            "status": row["status"],
-                        }
-                    )
-            except (ValueError, KeyError):
-                pass
-        return report_data
+    def _handle_single_score(self, df: pd.DataFrame, score_col: str) -> list[dict[str, Any]]:
+        """Specific logic for single score column (Binary or Regression)."""
+        is_regression = self.context and self.context.task_type == TaskType.REGRESSION
+        calc = self.regression_psi_ if is_regression else self.score_psi_
+
+        calc.score_col_ = score_col
+        if not calc.reference_stats_ and self.context:
+            ctx_stats = getattr(self.context, "reference_stats", {})
+            if score_col in ctx_stats:
+                calc.reference_stats_ = {score_col: ctx_stats[score_col]}
+
+        try:
+            score_summary = calc.transform(df)
+            return self._format_psi_results(score_summary, "score")
+        except (ValueError, KeyError):
+            return []
+
+    def _load_multiclass_ref_stats(self, score_col: list[str]) -> None:
+        """Load multiclass stats from context."""
+        ctx_stats = getattr(self.context, "reference_stats", {})
+        ref_stats = {col: ctx_stats[col] for col in score_col if col in ctx_stats}
+        self.multiclass_psi_.reference_stats_ = ref_stats
+
+    def _format_psi_results(self, summary: pd.DataFrame, result_type: str) -> list[dict[str, Any]]:
+        """Common result formatter for PSI summaries."""
+        return [
+            {
+                "type": result_type,
+                "name": row["feature"],
+                "psi": row["psi"],
+                "status": row["status"],
+            }
+            for _, row in summary.iterrows()
+        ]
 
     def generate(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """Alias for run() to match Issue #50 specs."""
