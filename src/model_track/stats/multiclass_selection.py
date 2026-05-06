@@ -61,7 +61,7 @@ class MulticlassSelector(BaseTransformer):
 
         summary = self._compute_iv_summary(df_sample, target, valid_features)
         strong_features = self._filter_by_iv(valid_features, summary)
-        selected = self._filter_by_cramers_v(df_sample, strong_features, summary)
+        selected = self._filter_by_cramers_v(df_sample, strong_features)
 
         self.selected_features_ = selected
         self.dropped_features_ = [f for f in valid_features if f not in selected]
@@ -115,9 +115,7 @@ class MulticlassSelector(BaseTransformer):
         strong.sort(key=lambda x: float(summary.loc[x, "max_iv"]), reverse=True)
         return strong
 
-    def _filter_by_cramers_v(
-        self, df: pd.DataFrame, features: list[str], summary: pd.DataFrame
-    ) -> list[str]:
+    def _filter_by_cramers_v(self, df: pd.DataFrame, features: list[str]) -> list[str]:
         """Stage 2: Remove highly correlated features (Cramer's V) keeping highest IV."""
         to_drop: set[str] = set()
         for i, f1 in enumerate(features):
