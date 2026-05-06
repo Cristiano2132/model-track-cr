@@ -4,43 +4,41 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-04 23:10:00
-- **Objetivo original:** Milestone 5 - Iniciar Suporte Multiclass e Revisão de Skills.
+- **Data / hora:** 2026-05-05 13:20:00
+- **Objetivo original:** Implementar `RegressionPSI` para monitoramento de estabilidade de escores contínuos (Milestone 6).
 
 ## Estado atual
 
 - **Feito:**
-    - `OvRWoeAdapter` implementado: suporte a WoE multiclass via One-vs-Rest (OvR).
-    - `MulticlassSelector` implementado: seleção de features com estratégias `max`, `mean` e `all` baseadas em OvR IV.
-    - Filtro de correlação Cramer's V integrado ao seletor multiclasse.
-    - Cobertura de testes para novos módulos: **95%+**.
-- **Concluído nesta sessão:**
-    - **Issue #52:** `OvRWoeAdapter` (PR #76).
-    - **Issue #53:** `MulticlassSelector` (PR #77).
-    - **ResourceGuard:** Atualizado para o protocolo "Stop & Recommend".
-- **Em curso / bloqueado:** Nenhum. Início da Milestone 5 segue em ritmo acelerado.
+  - Classe `RegressionPSI` implementada em `psi.py` (herdando de `ModelPSI`).
+  - `StabilityReport` atualizado para instanciar e utilizar `RegressionPSI` de forma transparente quando `TaskType.REGRESSION`.
+  - Testes unitários para a classe e testes de integração no relatório adicionados.
+  - O pipeline completo passou nos testes, linting (`ruff`) e type-checking (`mypy`).
+  - Issue #82 criada e fechada via PR #83 (mergeado em `develop`).
+- **Em curso / bloqueado:** nenhum.
 
 ## Decisões importantes
 
-- **Estratégias de Seleção:** Implementadas 3 variantes (`max`, `mean`, `all`) para dar flexibilidade ao cientista de dados dependendo da severidade desejada no filtro OvR.
-- **Protocolo ResourceGuard:** Mudança para "Stop & Recommend" para garantir que o usuário tenha controle total sobre a troca de modelos entre tarefas analíticas e mecânicas.
+- **Semântica via Herança** → `RegressionPSI` apenas herda de `ModelPSI` para oferecer clareza semântica no código (distinguindo escores categóricos/multiclasse de previsões contínuas), sem duplicar lógicas complexas.
+- **Transparência no Report** → No `StabilityReport`, a distinção entre os PSI de score ocorre via checagem do `TaskType` vindo do `ProjectContext`.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/stats/multiclass_selection.py` | [NEW] Seletor de features para tarefas multiclasse. |
-| `tests/unit/stats/test_multiclass_selector.py` | [NEW] Testes unitários para o novo seletor. |
-| `src/model_track/stats/__init__.py` | Exportação do `MulticlassSelector`. |
-| `~/.gemini/antigravity/skills/resource-guard/SKILL.md` | [UPDATE] Novo protocolo Stop & Recommend. |
+| `src/model_track/stability/psi.py` | Adicionada classe `RegressionPSI`. |
+| `src/model_track/stability/report.py` | Instanciação e uso de `RegressionPSI` via verificação de contexto de regressão. |
+| `src/model_track/stability/__init__.py` | Export de `RegressionPSI`. |
+| `tests/unit/stability/test_regression_psi.py` | Testes unitários do novo componente. |
+| `tests/unit/stability/test_stability_report.py` | Testes de integração de regressão. |
 
 ## Próximos passos
 
-1. **Issue #54:** Criar notebook de exemplo end-to-end multiclass.
-2. **Issue #55:** Implementar `RegressionSelector` (Pearson/Spearman + VIF).
+1. **Documentação (Milestone 6)**: Criar o notebook end-to-end de regressão (`notebooks/regression_example.ipynb`) conforme a Issue #56.
+2. **Adapters (Milestone 7)**: Implementar wrappers sklearn (Issue #57).
 
 ## Notas para o agente
 
-- **Rito de Custo:** Use Flash para ritos. Pare e recomende Sonnet para tarefas de design de código ou notebooks complexos.
-- **Tests:** Garantir que o novo notebook use dados sintéticos representativos para multiclasse.
-- **Multiclass:** Continuar seguindo o padrão de nomenclatura `{col}_woe_{class}` quando aplicável.
+- Para rodar testes de estabilidade: `poetry run pytest tests/unit/stability/`.
+- Issue #82 vinculada ao PR #83.
+- Tarefas mecânicas de rito configuradas para alertar o usuário sobre o uso do modelo **Flash**.
