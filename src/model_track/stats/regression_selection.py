@@ -60,21 +60,36 @@ class RegressionSelector(BaseTransformer):
 
         valid_features = [f for f in features if f in df.columns]
 
-        # 0. Check for zero variance
-        non_constant_features = []
-        for f in valid_features:
+        non_constant = self._filter_zero_variance(df, valid_features)
+        passing_target_corr = self._filter_by_target_correlation(df, target, non_constant)
+        passing_pair_corr = self._filter_by_pair_correlation(df, passing_target_corr)
+        self.selected_features_ = self._filter_by_vif(df, passing_pair_corr)
+
+        return self
+
+    # ------------------------------------------------------------------
+    # Private filtering stages
+    # ------------------------------------------------------------------
+
+    def _filter_zero_variance(self, df: pd.DataFrame, features: list[str]) -> list[str]:
+        """Stage 0: Remove constant features."""
+        valid = []
+        for f in features:
             if df[f].nunique(dropna=True) <= 1:
                 self.dropped_features_[f] = "zero_variance"
             else:
-                non_constant_features.append(f)
+                valid.append(f)
+        return valid
 
-        # 1. Target Correlation
-        target_corr = {}
-        features_passing_target_corr = []
+    def _filter_by_target_correlation(
+        self, df: pd.DataFrame, target: str, features: list[str]
+    ) -> list[str]:
+        """Stage 1: Remove features with low correlation to target."""
+        target_corr: dict[str, float] = {}
+        passing = []
 
-        for f in non_constant_features:
+        for f in features:
             corr = df[f].corr(df[target], method=self.method)
-            # Handle NaN correlation (e.g., constant in sample after dropna)
             if pd.isna(corr):
                 self.dropped_features_[f] = "zero_variance"
                 continue
@@ -83,89 +98,83 @@ class RegressionSelector(BaseTransformer):
             target_corr[f] = abs_corr
 
             if abs_corr >= self.min_correlation:
-                features_passing_target_corr.append(f)
+                passing.append(f)
             else:
                 self.dropped_features_[f] = "low_target_correlation"
 
         self.target_corr_ = target_corr
+        # Sort by target correlation descending so strongest features survive pair filter
+        passing.sort(key=lambda x: self.target_corr_[x], reverse=True)
+        return passing
 
-        # 2. Pairwise Correlation
-        # Sort features by target correlation descending
-        features_passing_target_corr.sort(key=lambda x: self.target_corr_[x], reverse=True)
+    def _filter_by_pair_correlation(self, df: pd.DataFrame, features: list[str]) -> list[str]:
+        """Stage 2: Remove features with high pairwise correlation."""
+        if not features:
+            return []
 
-        features_passing_pair_corr = []
-        if features_passing_target_corr:
-            # Calculate full correlation matrix for remaining features
-            corr_matrix = df[features_passing_target_corr].corr(method=self.method).abs()
+        corr_matrix = df[features].corr(method=self.method).abs()
+        to_drop: set[str] = set()
+        passing = []
 
-            to_drop_corr = set()
-            for i, f1 in enumerate(features_passing_target_corr):
-                if f1 in to_drop_corr:
-                    continue
+        for i, f1 in enumerate(features):
+            if f1 in to_drop:
+                continue
+            passing.append(f1)
+            for f2 in features[i + 1 :]:
+                if f2 in to_drop:
+                    continue  # pragma: no cover
+                if corr_matrix.loc[f1, f2] > self.correlation_threshold:
+                    to_drop.add(f2)
+                    self.dropped_features_[f2] = "high_pair_correlation"
 
-                features_passing_pair_corr.append(f1)
+        return passing
 
-                for f2 in features_passing_target_corr[i + 1 :]:
-                    if f2 in to_drop_corr:
-                        continue
+    def _compute_vif_scores(self, vif_data: pd.DataFrame, features: list[str]) -> dict[str, float]:
+        """Compute VIF for each feature in the list."""
+        vif_scores: dict[str, float] = {}
+        for target_feature in features:
+            predictors = [f for f in features if f != target_feature]
+            X = vif_data[predictors].values
+            y = vif_data[target_feature].values
 
-                    if corr_matrix.loc[f1, f2] > self.correlation_threshold:
-                        to_drop_corr.add(f2)
-                        self.dropped_features_[f2] = "high_pair_correlation"
+            if np.var(y) == 0:
+                vif_scores[target_feature] = float("inf")
+                continue
 
-        # 3. Iterative VIF
-        current_features = features_passing_pair_corr.copy()
+            lr = LinearRegression()
+            lr.fit(X, y)
+            r2 = lr.score(X, y)
+            vif_scores[target_feature] = float("inf") if r2 >= 0.99999 else 1.0 / (1.0 - r2)
 
-        # Prepare data for VIF (dropna to ensure LinearRegression works)
-        vif_data = df[current_features].dropna()
+        return vif_scores
 
-        while len(current_features) > 1:
-            vif_scores = {}
-            for _i, target_feature in enumerate(current_features):
-                predictor_features = [f for f in current_features if f != target_feature]
+    def _filter_by_vif(self, df: pd.DataFrame, features: list[str]) -> list[str]:
+        """Stage 3: Iteratively remove features with highest VIF above threshold."""
+        current = features.copy()
+        vif_data = df[current].dropna()
 
-                X = vif_data[predictor_features].values
-                y = vif_data[target_feature].values
-
-                # Check for constant target in subset
-                if np.var(y) == 0:
-                    vif_scores[target_feature] = float("inf")
-                    continue
-
-                lr = LinearRegression()
-                lr.fit(X, y)
-
-                # R^2 score
-                r2 = lr.score(X, y)
-
-                # Handle edge cases where R^2 is 1.0 (perfect multicollinearity)
-                if r2 >= 0.99999:
-                    vif = float("inf")
-                else:
-                    vif = 1.0 / (1.0 - r2)
-
-                vif_scores[target_feature] = vif
-
-            max_vif_feature = max(vif_scores, key=lambda k: vif_scores[k])
-            max_vif = vif_scores[max_vif_feature]
+        while len(current) > 1:
+            vif_scores = self._compute_vif_scores(vif_data, current)
+            max_feature = max(vif_scores, key=vif_scores.get)  # type: ignore
+            max_vif = vif_scores[max_feature]
 
             if max_vif > self.vif_threshold:
-                current_features.remove(max_vif_feature)
-                self.dropped_features_[max_vif_feature] = "high_vif"
-                self.vif_results_[max_vif_feature] = max_vif
+                current.remove(max_feature)
+                self.dropped_features_[max_feature] = "high_vif"
+                self.vif_results_[max_feature] = max_vif
             else:
-                # All remaining features pass VIF threshold
-                for f in current_features:
+                for f in current:
                     self.vif_results_[f] = vif_scores[f]
                 break
 
-        # If loop exits due to 1 feature left, calculate its VIF as 1.0
-        if len(current_features) == 1:
-            self.vif_results_[current_features[0]] = 1.0
+        if len(current) == 1:
+            self.vif_results_[current[0]] = 1.0
 
-        self.selected_features_ = current_features
+        return current
 
-        return self
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """

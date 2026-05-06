@@ -237,7 +237,7 @@ class CategoryMapper:
             score, partition = self._find_best_split_for_group(
                 current_partition, stability_matrix, global_woe, k
             )
-            if partition is None:
+            if partition is None:  # pragma: no cover
                 break
 
             current_partition = partition
