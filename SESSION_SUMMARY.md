@@ -4,41 +4,41 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-05 13:20:00
-- **Objetivo original:** Implementar `RegressionPSI` para monitoramento de estabilidade de escores contínuos (Milestone 6).
+- **Data / hora:** 2026-05-05 23:25:00
+- **Objetivo original:** Finalizar Milestone 6 (Regression Support) com o notebook de exemplo end-to-end (Issue #56).
 
 ## Estado atual
 
 - **Feito:**
-  - Classe `RegressionPSI` implementada em `psi.py` (herdando de `ModelPSI`).
-  - `StabilityReport` atualizado para instanciar e utilizar `RegressionPSI` de forma transparente quando `TaskType.REGRESSION`.
-  - Testes unitários para a classe e testes de integração no relatório adicionados.
-  - O pipeline completo passou nos testes, linting (`ruff`) e type-checking (`mypy`).
-  - Issue #82 criada e fechada via PR #83 (mergeado em `develop`).
-- **Em curso / bloqueado:** nenhum.
+  - **Regression Support (M6)**: Pipeline completo implementado e validado.
+  - **Notebook de Exemplo**: `notebooks/regression_example.ipynb` criado com o fluxo `Audit -> Selection -> LightGBM -> Evaluation -> Stability -> Context`.
+  - **Correções Críticas**: Ajustes no `RegressionEvaluator` (assinatura do intervalo de predição) e `StabilityReport` (plotagem nativa de heatmap).
+  - **Documentação**: `README.md` e `README.pt-br.md` atualizados com links para o novo exemplo.
+  - **Issue #56**: Fechada via PR #84 (mergeado em `develop`).
+  - **Limpeza**: Branches temporárias removidas; `develop` sincronizado.
+- **Em curso / bloqueado:** Nenhum.
 
 ## Decisões importantes
 
-- **Semântica via Herança** → `RegressionPSI` apenas herda de `ModelPSI` para oferecer clareza semântica no código (distinguindo escores categóricos/multiclasse de previsões contínuas), sem duplicar lógicas complexas.
-- **Transparência no Report** → No `StabilityReport`, a distinção entre os PSI de score ocorre via checagem do `TaskType` vindo do `ProjectContext`.
+- **Plotagem Nativa** → Substituição da lógica manual de plotagem no notebook pelo método `stability.plot_drift_heatmap()` da lib, garantindo manutenibilidade e evitando erros de renderização de chaves de status.
+- **Validação de Notebook** → O notebook foi validado via `nbconvert` para garantir que o código fornecido ao usuário execute sem erros do início ao fim.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/stability/psi.py` | Adicionada classe `RegressionPSI`. |
-| `src/model_track/stability/report.py` | Instanciação e uso de `RegressionPSI` via verificação de contexto de regressão. |
-| `src/model_track/stability/__init__.py` | Export de `RegressionPSI`. |
-| `tests/unit/stability/test_regression_psi.py` | Testes unitários do novo componente. |
-| `tests/unit/stability/test_stability_report.py` | Testes de integração de regressão. |
+| `notebooks/regression_example.ipynb` | Criação do notebook end-to-end de regressão. |
+| `README.md` | Inclusão do link para o notebook de regressão. |
+| `README.pt-br.md` | Inclusão do link para o notebook de regressão em português. |
+| `SESSION_SUMMARY.md` | Atualização do progresso da sessão. |
 
 ## Próximos passos
 
-1. **Documentação (Milestone 6)**: Criar o notebook end-to-end de regressão (`notebooks/regression_example.ipynb`) conforme a Issue #56.
-2. **Adapters (Milestone 7)**: Implementar wrappers sklearn (Issue #57).
+1. **Adapters (Milestone 7)**: Iniciar a implementação dos adapters scikit-learn (`SklearnBinnerStep`, `SklearnWoeStep`, `SklearnSelectorStep`) conforme issue #57.
+2. **Tuning (Milestone 8)**: Implementar `BayesianTuner` (issue #58).
 
 ## Notas para o agente
 
-- Para rodar testes de estabilidade: `poetry run pytest tests/unit/stability/`.
-- Issue #82 vinculada ao PR #83.
-- Tarefas mecânicas de rito configuradas para alertar o usuário sobre o uso do modelo **Flash**.
+- A Milestone 6 está 100% concluída.
+- O ambiente está sincronizado na branch `develop`.
+- Recomenda-se iniciar um novo chat com `@SESSION_SUMMARY.md` para as tarefas da Milestone 7.
