@@ -222,11 +222,8 @@ class CategoryMapper:
         min_groups: int = 2,
         is_ordered: bool = False,
     ) -> dict[str, str]:
-        """
-        Heuristic: Iteratively split groups to find a good partition in O(n^2).
-        """
+        """Heuristic: Iteratively split groups to find a good partition in O(n^2)."""
         categories = stability_matrix.columns.tolist()
-        n = len(categories)
         global_woe = stability_matrix.mean()
         sorted_cats = self._get_sorted_categories(categories, global_woe, is_ordered)
 
@@ -236,19 +233,16 @@ class CategoryMapper:
         )
 
         current_partition = [sorted_cats]
-
-        for k in range(2, n + 1):
-            best_k_score, best_k_partition = self._find_best_split_for_group(
+        for k in range(2, len(categories) + 1):
+            score, partition = self._find_best_split_for_group(
                 current_partition, stability_matrix, global_woe, k
             )
-
-            if best_k_partition is None:
+            if partition is None:
                 break
 
-            current_partition = best_k_partition
-
-            if k >= min_groups and best_k_score < best_overall_score:
-                best_overall_score = best_k_score
+            current_partition = partition
+            if k >= min_groups and score < best_overall_score:
+                best_overall_score = score
                 best_overall_partition = current_partition
 
         return self._generate_intelligent_names(best_overall_partition, categories)
@@ -319,25 +313,41 @@ class CategoryMapper:
             return self._greedy_group(stability_matrix, min_groups, is_ordered)
 
         global_woe = stability_matrix.mean()
-
         sorted_cats = self._get_sorted_categories(categories, global_woe, is_ordered)
 
+        best_partition = self._exhaustive_search(
+            sorted_cats, stability_matrix, global_woe, min_groups
+        )
+        return self._generate_intelligent_names(best_partition, categories)
+
+    def _exhaustive_search(
+        self,
+        sorted_cats: list[str],
+        stability_matrix: pd.DataFrame,
+        global_woe: pd.Series,
+        min_groups: int,
+    ) -> list[list[str]] | None:
+        """Core exhaustive search logic."""
+        n = len(sorted_cats)
         best_score: tuple[float, float, float] = (float("inf"), float("inf"), float("inf"))
         best_partition: list[list[str]] | None = None
 
         for k in range(min_groups, n + 1):
             for splits in itertools.combinations(range(1, n), k - 1):
-                partition = []
-                prev = 0
-                for split in splits:
-                    partition.append(sorted_cats[prev:split])
-                    prev = split
-                partition.append(sorted_cats[prev:])
-
+                partition = self._build_partition(sorted_cats, splits)
                 score = self._score_partition(partition, stability_matrix, global_woe, k)
 
                 if score < best_score:
                     best_score = score
                     best_partition = partition
+        return best_partition
 
-        return self._generate_intelligent_names(best_partition, categories)
+    def _build_partition(self, sorted_cats: list[str], splits: tuple[int, ...]) -> list[list[str]]:
+        """Utility to build partition groups from split indices."""
+        partition = []
+        prev = 0
+        for split in splits:
+            partition.append(sorted_cats[prev:split])
+            prev = split
+        partition.append(sorted_cats[prev:])
+        return partition

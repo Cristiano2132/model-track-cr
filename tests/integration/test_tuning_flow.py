@@ -1,10 +1,20 @@
 import pandas as pd
+import pytest
 from sklearn.datasets import make_classification, make_regression
 
 from model_track.base import BinaryAdapter, RegressionAdapter
 from model_track.tuning import LGBMTuner
+from model_track.tuning.bayesian import HAS_BAYES
+from model_track.tuning.lgbm import HAS_LGBM
+
+# Markers for optional dependencies
+requires_tuning = pytest.mark.skipif(
+    not (HAS_BAYES and HAS_LGBM),
+    reason="Tuning dependencies (lightgbm, bayesian-optimization) not installed",
+)
 
 
+@requires_tuning
 def test_integration_lgbm_tuning_binary():
     # 1. Setup data
     X, y = make_classification(n_samples=100, n_features=10, random_state=42)
@@ -27,6 +37,7 @@ def test_integration_lgbm_tuning_binary():
     assert len(preds) == 100
 
 
+@requires_tuning
 def test_integration_lgbm_tuning_regression():
     # 1. Setup data
     X, y = make_regression(n_samples=100, n_features=10, random_state=42)

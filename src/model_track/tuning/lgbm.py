@@ -5,6 +5,7 @@ from model_track.tuning.bayesian import BayesianTuner
 
 try:
     import lightgbm as lgb
+
     HAS_LGBM = True
 except ImportError:
     HAS_LGBM = False
@@ -65,17 +66,10 @@ class LGBMTuner(BayesianTuner):
     def _create_model(self, params: dict[str, Any]) -> Any:
         """Create LGBMClassifier or LGBMRegressor based on task type."""
         if self.task.task_type == TaskType.REGRESSION:
-            return lgb.LGBMRegressor(
-                random_state=self.random_state,
-                verbose=-1,
-                **params
-            )
-        
+            return lgb.LGBMRegressor(random_state=self.random_state, verbose=-1, **params)
+
         # Binary or Multiclass
         objective = "binary" if self.task.task_type == TaskType.BINARY else "multiclass"
         return lgb.LGBMClassifier(
-            objective=objective,
-            random_state=self.random_state,
-            verbose=-1,
-            **params
+            objective=objective, random_state=self.random_state, verbose=-1, **params
         )

@@ -5,6 +5,14 @@ import pytest
 
 from model_track.base import BinaryAdapter, MulticlassAdapter, RegressionAdapter
 from model_track.tuning import LGBMTuner
+from model_track.tuning.bayesian import HAS_BAYES
+from model_track.tuning.lgbm import HAS_LGBM
+
+# Markers for optional dependencies
+requires_tuning = pytest.mark.skipif(
+    not (HAS_BAYES and HAS_LGBM),
+    reason="Tuning dependencies (lightgbm, bayesian-optimization) not installed",
+)
 
 
 @pytest.fixture
@@ -14,12 +22,14 @@ def sample_data():
     return X, y
 
 
+@requires_tuning
 def test_lgbm_tuner_initialization():
     tuner = LGBMTuner(task=BinaryAdapter())
     assert tuner.cv_folds == 3
     assert "num_leaves" in tuner.param_bounds
 
 
+@requires_tuning
 def test_lgbm_tuner_process_params():
     tuner = LGBMTuner(task=BinaryAdapter())
     raw_params = {"num_leaves": 31.5, "max_depth": 5.9, "learning_rate": 0.1}
@@ -29,6 +39,7 @@ def test_lgbm_tuner_process_params():
     assert processed["learning_rate"] == 0.1
 
 
+@requires_tuning
 @patch("model_track.tuning.bayesian.BayesianOptimization")
 def test_lgbm_tuner_mocked_tune(mock_bayes, sample_data):
     X, y = sample_data
@@ -44,6 +55,7 @@ def test_lgbm_tuner_mocked_tune(mock_bayes, sample_data):
     mock_instance.maximize.assert_called_once()
 
 
+@requires_tuning
 def test_lgbm_tuner_create_model_binary():
     tuner = LGBMTuner(task=BinaryAdapter())
     model = tuner._create_model({"num_leaves": 20})
@@ -53,6 +65,7 @@ def test_lgbm_tuner_create_model_binary():
     assert model.objective == "binary"
 
 
+@requires_tuning
 def test_lgbm_tuner_create_model_multiclass():
     tuner = LGBMTuner(task=MulticlassAdapter())
     model = tuner._create_model({"num_leaves": 20})
@@ -62,6 +75,7 @@ def test_lgbm_tuner_create_model_multiclass():
     assert model.objective == "multiclass"
 
 
+@requires_tuning
 def test_lgbm_tuner_create_model_regression():
     tuner = LGBMTuner(task=RegressionAdapter())
     model = tuner._create_model({"num_leaves": 20})
@@ -70,6 +84,7 @@ def test_lgbm_tuner_create_model_regression():
     assert isinstance(model, LGBMRegressor)
 
 
+@requires_tuning
 def test_lgbm_tuner_get_scoring_metric():
     assert LGBMTuner(task=BinaryAdapter())._get_scoring_metric() == "roc_auc"
     assert LGBMTuner(task=MulticlassAdapter())._get_scoring_metric() == "roc_auc_ovr"
@@ -78,6 +93,7 @@ def test_lgbm_tuner_get_scoring_metric():
     )
 
 
+@requires_tuning
 def test_tuner_error_if_not_tuned():
     tuner = LGBMTuner(task=BinaryAdapter())
     with pytest.raises(ValueError, match="Tuner has not been fitted yet"):
@@ -86,7 +102,9 @@ def test_tuner_error_if_not_tuned():
 
 def test_lgbm_tuner_no_lgbm_error():
     with patch("model_track.tuning.lgbm.HAS_LGBM", False):
-        with pytest.raises(ImportError, match="'lightgbm' is required"):
+        # In CI, if bayesian-optimization is also missing, it might raise that error first
+        # because LGBMTuner calls super().__init__ which checks HAS_BAYES.
+        with pytest.raises(ImportError, match="is required"):
             LGBMTuner(task=BinaryAdapter())
 
 
