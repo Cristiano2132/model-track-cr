@@ -40,6 +40,8 @@ pre-commit = ">=3.5.0"
 hypothesis = ">=6.80.0"
 ipykernel = "^7.2.0"
 pip = ">=26.1"
+lightgbm = ">=4.3.0,<5.0.0"
+bayesian-optimization = "1.4.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
