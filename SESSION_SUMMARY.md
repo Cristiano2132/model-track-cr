@@ -4,42 +4,42 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-06 00:10:00
-- **Objetivo original:** Resolving CI And Sonar Issues + Finalizing Issue #58 (Tuning Module)
+- **Data / hora:** 2026-05-06 01:08:00
+- **Objetivo original:** Refatoração SonarCloud e otimização de cobertura para 100%.
 
 ## Estado atual
 
-- **Feito:**
-    - Refatoração de complexidade cognitiva em `StabilityReport` e `CategoryMapper` (SonarCloud OK).
-    - Implementação de `skipif` condicional nos testes de tuning para ambientes sem libs opcionais.
-    - Correção de vulnerabilidade de segurança atualizando o `pip`.
-    - Inclusão de dependências de tuning (`lightgbm`, `bayesian-optimization`) no grupo `dev` para garantir cobertura no SonarCloud.
-    - Atualização do `.gitignore` para ignorar `.coverage.Mac*`.
-    - **Merge do PR #85** na branch `develop`.
-    - **Fechamento da Issue #58** com rito completo.
+- **Feito:** 
+    - Refatoração de `RegressionSelector`, `MulticlassSelector` e `OvRWoeAdapter` (redução de complexidade cognitiva).
+    - Correção de bugs de closure em lambdas (S1515) e mypy inference.
+    - Alcance de **100% de cobertura de testes** (241 testes passando).
+    - Faxina de arquivos temporários e organização de scripts.
+    - Merge do PR #96 para a branch `develop`.
+    - Fechamento das issues #89, #91, #92, #93, #94, #95.
 - **Em curso / bloqueado:** nenhum.
 
 ## Decisões importantes
 
-- **Tuning em dev-dependencies** → Para atingir o Quality Gate do SonarCloud (>80% cobertura em código novo), as dependências opcionais de tuning foram movidas para o grupo `dev`. Isso garante que o pipeline do Sonar (que instala o grupo dev) consiga rodar os testes e validar a cobertura sem quebrar o ambiente "base" de produção do usuário final.
+- **Refatoração por estágios:** No `RegressionSelector`, a lógica foi dividida em métodos privados (`_filter_by_variance`, etc.) para facilitar testes unitários isolados e reduzir a complexidade linear do `fit`.
+- **Pragma no cover:** Utilizado estritamente para blocos de fallback de importação (bibliotecas opcionais como `lightgbm` e `optuna`) e ramificações de erro inalcançáveis em condições normais, garantindo que a métrica de 100% reflita a lógica de negócio real.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `pyproject.toml` | Adicionadas dependências de tuning ao grupo dev e atualizado pip. |
-| `src/model_track/stability/report.py` | Refatoração de `_process_score_psi` para reduzir complexidade. |
-| `src/model_track/woe/stability.py` | Refatoração de `_greedy_group` e `auto_group` para reduzir complexidade. |
-| `.gitignore` | Ignorar arquivos `.coverage.Mac*` e `.coverage.*`. |
-| `tests/unit/tuning/test_lgbm_tuner.py` | Adicionados marcadores de skip condicional. |
+| `src/model_track/stats/regression_selection.py` | Refatoração de complexidade e fix closure. |
+| `src/model_track/stats/multiclass_selection.py` | Refatoração de complexidade e remoção de parâmetro não usado. |
+| `src/model_track/woe/ovr_adapter.py` | Refatoração de transformadas e fix mypy lambda. |
+| `tests/unit/stats/*_coverage.py` | Novos testes para gaps de cobertura. |
+| `tests/unit/tuning/test_bayesian_coverage.py` | Testes para base tuning. |
 
 ## Próximos passos
 
-1. Iniciar a **Milestone 7 (Adapters scikit-learn - Issue #57)**.
-2. Criar adaptadores que permitam que os modelos do `model-track-cr` sigam a API `sklearn.base.BaseEstimator`.
+1. Sincronizar `main` com `develop` (Release v1.1.0).
+2. Verificar se novas issues surgem no SonarCloud após o merge no branch estável.
 
 ## Notas para o agente
 
-- O repositório está estável e o CI está passando em todas as versões de Python (3.10-3.13).
-- O SonarCloud agora valida a cobertura do módulo `tuning`.
-- Sempre sincronizar o `develop` antes de abrir novas branches de feature.
+- **Comando de teste:** `make test` roda a suíte completa com relatório de cobertura.
+- **Rito de PR:** Sempre usar o template em `.agent/templates/pr_description.md` e vincular milestones.
+- **Mypy:** Atenção a lambdas com argumentos default; prefira funções internas tipadas para evitar erros de inferência.
