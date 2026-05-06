@@ -253,7 +253,7 @@ O projeto usa Git Flow, GitHub Issues e Pull Requests. Orientações de ambiente
 
 Hoje a narrativa principal está neste README (EN / PT-BR) e no guia de testes acima. As docstrings em `src/model_track` funcionam como referência de API. Guias por módulo e um walkthrough ponta a ponta podem ser adicionados conforme a superfície da biblioteca crescer.
 
----
+### 📓 Notebooks de Exemplo\n\n| Notebook | Descrição |\n|----------|-----------|\n| [`notebooks/multiclass_example.ipynb`](notebooks/multiclass_example.ipynb) | Pipeline multiclasse completo: Wine dataset → binning → `MulticlassSelector` → `OvRWoeAdapter` → LightGBM → `MulticlassEvaluator` → `ProjectContext`. |\n| [`notebooks/regression_example.ipynb`](notebooks/regression_example.ipynb) | Pipeline de regressão completo: California Housing → Auditoria → `RegressionSelector` (Spearman + VIF) → LightGBM → `RegressionEvaluator` → `StabilityReport` → `ProjectContext`. |
 
 ## Quando usar esta biblioteca?
 

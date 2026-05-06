@@ -40,6 +40,12 @@ You are an expert AI coding assistant specializing in Data Science and Machine L
     - Use clean typography and ample whitespace.
     - Ensure responsive design and high visual impact.
 
+## 🧩 Antigravity Skills
+Refer to and follow the protocols in `.agent/skills/` for specific behaviors:
+- **ResourceGuard**: `.agent/skills/resource-guard/SKILL.md` (Quota and cost management).
+- **ContextSlimmer**: `.agent/skills/context-slimmer/SKILL.md` (Context management).
+- **Caveman**: `.agent/skills/caveman/SKILL.md` (Brevity and token economy). Active when user uses `/caveman`.
+
 ## 🚀 How to Help the User
 - Always check `AGENTS.md` for environment-specific pitfalls.
 - Before suggesting complex changes, create an implementation plan.

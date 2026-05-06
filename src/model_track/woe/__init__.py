@@ -3,7 +3,7 @@ WoE (Weight of Evidence) module for model-track.
 Tools for WoE calculation, stability analysis, and category mapping.
 
 Example:
-    >>> from model_track.woe import WoeCalculator, WoeStability
+    >>> from model_track.woe import WoeCalculator, WoeStability, OvRWoeAdapter
     >>> # Calculate WoE
     >>> calc = WoeCalculator()
     >>> calc.fit(df, target="target", columns=["category_col"])
@@ -14,6 +14,7 @@ Example:
 """
 
 from model_track.woe.calculator import WoeCalculator
+from model_track.woe.ovr_adapter import OvRWoeAdapter
 from model_track.woe.stability import CategoryMapper, WoeStability
 
-__all__ = ["WoeCalculator", "WoeStability", "CategoryMapper"]
+__all__ = ["WoeCalculator", "WoeStability", "CategoryMapper", "OvRWoeAdapter"]

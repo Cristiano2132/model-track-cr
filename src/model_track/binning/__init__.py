@@ -9,6 +9,8 @@ Example:
     >>> df["age_binned"] = binner.transform(df, column="age")
 """
 
+from model_track.binning.bin_applier import BinApplier
+from model_track.binning.quantile_binner import QuantileBinner
 from model_track.binning.tree_binner import TreeBinner
 
-__all__ = ["TreeBinner"]
+__all__ = ["TreeBinner", "QuantileBinner", "BinApplier"]

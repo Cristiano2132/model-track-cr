@@ -4,48 +4,47 @@
 
 ## Meta
 
-- **Data / hora:** 2026-05-03 01:33:00
-- **Objetivo original:** Implementar StabilityReport e ModelPSI (Issue #50) para orquestração de drift.
+- **Data / hora:** 2026-05-06 02:37:00
+- **Objetivo original:** Implementar model-agnostic BayesianTuner com preset LGBMTuner (Issue #58).
 
 ## Estado atual
 
 - **Feito:**
-    - `StabilityReport` implementado com orquestração feature + score drift.
-    - Heatmap visual (`plot_drift_heatmap`) e checks de saúde (`is_healthy`).
-    - `ModelPSI` especializado para scores com suporte a deciles fixos.
-    - Cobertura de testes atingiu 98.83% global (90%+ nos arquivos novos).
-    - PR #69, #70, #71 e #72 mergeados.
-    - Issue #50, #45, #46, #49 e #47 fechadas.
-    - **100% de cobertura** atingida no módulo `evaluation` (Issue #47).
-    - Testes estatísticos e de integração adicionados.
-- **Em curso / bloqueado:** Nenhum. Milestone 3 concluído.
+  - **Tuning Module (M8)**: Implementada a infraestrutura base e o otimizador bayesiano.
+  - **BaseTuner**: Classe abstrata definida em `src/model_track/tuning/base.py`.
+  - **BayesianTuner**: Wrapper para a biblioteca `bayesian-optimization` implementado em `src/model_track/tuning/bayesian.py`.
+  - **LGBMTuner**: Preset especializado para LightGBM em `src/model_track/tuning/lgbm.py`, com suporte a Binary, Multiclass e Regression.
+  - **Task-Aware**: Integração com `TaskAdapter` para seleção automática de métricas (AUC, Macro-AUC, RMSE).
+  - **Resiliência**: Tratamento de dependências opcionais (`lightgbm`, `bayesian-optimization`) via `__init__.py`.
+  - **Testes**: 100% de cobertura nos fluxos de tuning (unitários mockados e integração real).
+  - **Issue #58**: PR #85 criado e associado à Milestone 8.
+- **Em curso / bloqueado:** Nenhum.
 
 ## Decisões importantes
 
-- **Isolamento de Contexto:** Adicionada cópia profunda (`.copy()`) ao carregar `reference_stats` do `ProjectContext` para evitar efeitos colaterais entre calculadores de feature e score.
-- **Lazy Visual Imports:** Imports de `seaborn` e `matplotlib` movidos para dentro dos métodos de plotagem para facilitar instalação mínima e evitar erros de tipagem global no MyPy.
-- **Robustez de Fallback:** `PSICalculator.from_context` agora inicializa com `{}` em vez de `None` para evitar `AttributeError` em contextos sem estatísticas.
-- **Validação de Target:** Evaluator lança `ValueError` se o target for binário, direcionando o usuário para o `BinaryEvaluator`.
-- **MAPE Robustez:** Filtro e warning para zeros no target de regressão para evitar divisões por zero ou resultados infinitos sem aviso.
+- **Abstração BayesianTuner** → O `BayesianTuner` não instancia o modelo diretamente; ele delega para subclasses via `_create_model`, permitindo que o `LGBMTuner` escolha entre `LGBMClassifier` ou `LGBMRegressor` dinamicamente com base no `TaskType`.
+- **Tratamento de Parâmetros Inteiros** → Implementado `_process_params` no `LGBMTuner` para converter floats retornados pelo otimizador em inteiros (ex: `num_leaves`), evitando erros no LightGBM.
+- **Exportação Condicional** → O `__init__.py` utiliza classes de fallback que lançam `ImportError` detalhado apenas no momento da instanciação, permitindo que a lib seja importada mesmo sem as dependências de tuning.
 
 ## Arquivos alterados
 
 | Arquivo | Alteração resumida |
 |----------|-------------------|
-| `src/model_track/stability/psi.py` | Implementado `ModelPSI` e fix em `from_context`. |
-| `src/model_track/stability/report.py` | Orquestrador principal com visualização e health checks. |
-| `src/model_track/evaluation/multiclass.py` | Nova classe `MulticlassEvaluator`. |
-| `src/model_track/evaluation/regression.py` | Nova classe `RegressionEvaluator`. |
-| `tests/unit/stability/test_stability_report.py` | Suite unitária completa com 90%+ cobertura. |
-| `tests/integration/test_stability_flow.py` | Validação ponta-a-ponta do fluxo de drift. |
+| `src/model_track/tuning/base.py` | Definição da interface BaseTuner. |
+| `src/model_track/tuning/bayesian.py` | Implementação do core Bayesian Optimization. |
+| `src/model_track/tuning/lgbm.py` | Implementação do preset LGBMTuner. |
+| `src/model_track/tuning/__init__.py` | Exportação e gestão de dependências. |
+| `tests/unit/tuning/test_lgbm_tuner.py` | Testes unitários com mocks. |
+| `tests/integration/test_tuning_flow.py` | Testes de integração end-to-end. |
 
 ## Próximos passos
 
-1. Iniciar Milestone 4: Implementar `QuantileBinner` (Issue #51).
-3. Expandir documentação de visualização no `README.md`.
+1. **Adapters (Milestone 7)**: Implementar os adapters scikit-learn (`SklearnBinnerStep`, etc.) conforme issue #57 (tarefa pendente).
+2. **Documentação**: Adicionar seção de Tuning ao README e criar notebook de exemplo de otimização.
 
 ## Notas para o agente
 
-- **Rito de Tarefa:** Seguir rigorosamente o workflow de planejamento → branch → commits → audit.
-- **Dependências:** `seaborn` e `matplotlib` são opcionais (`[viz]`).
-- **Tests:** `make test` executa a suíte completa com cobertura.
+- A branch de trabalho é `feature/58-bayesian-tuner`.
+- O PR #85 está aberto aguardando merge em `develop`.
+- O ambiente possui `lightgbm` e `bayesian-optimization` instalados (conforme testes bem-sucedidos).
+- Para as próximas tarefas, recomenda-se abrir um **novo chat** com `@SESSION_SUMMARY.md`.

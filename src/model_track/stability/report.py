@@ -2,8 +2,9 @@ from typing import Any
 
 import pandas as pd
 
+from ..base import TaskType
 from ..context import ProjectContext
-from .psi import ModelPSI, PSICalculator
+from .psi import ModelPSI, MulticlassPSI, PSICalculator, RegressionPSI
 
 
 class StabilityReport:
@@ -23,6 +24,8 @@ class StabilityReport:
         self.score_threshold = score_threshold
         self.feature_psi_ = PSICalculator()
         self.score_psi_ = ModelPSI()
+        self.multiclass_psi_ = MulticlassPSI()
+        self.regression_psi_ = RegressionPSI()
         self.results_: dict[str, Any] = {}
 
         if context:
@@ -47,27 +50,53 @@ class StabilityReport:
         self,
         df: pd.DataFrame,
         features: list[str] | None = None,
-        score_col: str | None = None,
+        score_col: str | list[str] | None = None,
     ) -> pd.DataFrame:
         """
         Execute stability checks for features and scores.
         """
-        # Cleanup score_col from feature_psi reference stats if it was loaded from context
-        if score_col and score_col in self.feature_psi_.reference_stats_:
-            del self.feature_psi_.reference_stats_[score_col]
-
+        self._prepare_score_col(score_col)
         report_data = []
 
         # 1. Feature PSI
-        feat_list = features
-        if feat_list is None and self.context:
-            # Try to get features from context reference_stats keys
-            all_keys = list(getattr(self.context, "reference_stats", {}).keys())
-            feat_list = [k for k in all_keys if k != score_col]
-
+        feat_list = self._get_feature_list(features, score_col)
         if feat_list:
-            feat_summary = self.feature_psi_.transform(df)
-            for _, row in feat_summary.iterrows():
+            report_data.extend(self._process_feature_psi(df, feat_list))
+
+        # 2. Score PSI
+        if score_col:
+            report_data.extend(self._process_score_psi(df, score_col))
+
+        self.results_["data"] = pd.DataFrame(report_data)
+        return self.results_["data"]
+
+    def _prepare_score_col(self, score_col: str | list[str] | None) -> None:
+        """Cleanup score_col from feature_psi reference stats if needed."""
+        if score_col:
+            cols = [score_col] if isinstance(score_col, str) else score_col
+            for col in cols:
+                if col in self.feature_psi_.reference_stats_:
+                    del self.feature_psi_.reference_stats_[col]
+
+    def _get_feature_list(
+        self, features: list[str] | None, score_col: str | list[str] | None
+    ) -> list[str] | None:
+        """Determine which features to analyze."""
+        if features is not None:
+            return features
+        if self.context:
+            cols_to_exclude = [score_col] if isinstance(score_col, str) else (score_col or [])
+            all_keys = list(getattr(self.context, "reference_stats", {}).keys())
+            return [k for k in all_keys if k not in cols_to_exclude]
+        return None
+
+    def _process_feature_psi(self, df: pd.DataFrame, feat_list: list[str]) -> list[dict[str, Any]]:
+        """Calculate PSI for features and format results."""
+        report_data = []
+        feat_summary = self.feature_psi_.transform(df)
+        # Filter only requested features
+        for _, row in feat_summary.iterrows():
+            if row["feature"] in feat_list:
                 report_data.append(
                     {
                         "type": "feature",
@@ -76,32 +105,64 @@ class StabilityReport:
                         "status": row["status"],
                     }
                 )
+        return report_data
 
-        # 2. Score PSI
-        if score_col:
-            self.score_psi_.score_col_ = score_col
-            if not self.score_psi_.reference_stats_ and self.context:
-                ctx_stats = getattr(self.context, "reference_stats", {})
-                if score_col in ctx_stats:
-                    self.score_psi_.reference_stats_ = {score_col: ctx_stats[score_col]}
+    def _process_score_psi(
+        self, df: pd.DataFrame, score_col: str | list[str]
+    ) -> list[dict[str, Any]]:
+        """Calculate PSI for scores and format results."""
+        if isinstance(score_col, list):
+            return self._handle_multiclass_score(df, score_col)
+        return self._handle_single_score(df, score_col)
 
-            try:
-                score_summary = self.score_psi_.transform(df)
-                for _, row in score_summary.iterrows():
-                    report_data.append(
-                        {
-                            "type": "score",
-                            "name": row["feature"],
-                            "psi": row["psi"],
-                            "status": row["status"],
-                        }
-                    )
-            except (ValueError, KeyError):
-                # Handle cases where score column might not be fitted or missing in DF
-                pass
+    def _handle_multiclass_score(
+        self, df: pd.DataFrame, score_col: list[str]
+    ) -> list[dict[str, Any]]:
+        """Specific logic for multiclass proba columns."""
+        self.multiclass_psi_.proba_cols_ = score_col
+        if not self.multiclass_psi_.reference_stats_ and self.context:
+            self._load_multiclass_ref_stats(score_col)
 
-        self.results_["data"] = pd.DataFrame(report_data)
-        return self.results_["data"]
+        try:
+            score_summary = self.multiclass_psi_.transform(df)
+            return self._format_psi_results(score_summary, "score")
+        except (ValueError, KeyError):
+            return []
+
+    def _handle_single_score(self, df: pd.DataFrame, score_col: str) -> list[dict[str, Any]]:
+        """Specific logic for single score column (Binary or Regression)."""
+        is_regression = self.context and self.context.task_type == TaskType.REGRESSION
+        calc = self.regression_psi_ if is_regression else self.score_psi_
+
+        calc.score_col_ = score_col
+        if not calc.reference_stats_ and self.context:
+            ctx_stats = getattr(self.context, "reference_stats", {})
+            if score_col in ctx_stats:
+                calc.reference_stats_ = {score_col: ctx_stats[score_col]}
+
+        try:
+            score_summary = calc.transform(df)
+            return self._format_psi_results(score_summary, "score")
+        except (ValueError, KeyError):
+            return []
+
+    def _load_multiclass_ref_stats(self, score_col: list[str]) -> None:
+        """Load multiclass stats from context."""
+        ctx_stats = getattr(self.context, "reference_stats", {})
+        ref_stats = {col: ctx_stats[col] for col in score_col if col in ctx_stats}
+        self.multiclass_psi_.reference_stats_ = ref_stats
+
+    def _format_psi_results(self, summary: pd.DataFrame, result_type: str) -> list[dict[str, Any]]:
+        """Common result formatter for PSI summaries."""
+        return [
+            {
+                "type": result_type,
+                "name": row["feature"],
+                "psi": row["psi"],
+                "status": row["status"],
+            }
+            for _, row in summary.iterrows()
+        ]
 
     def generate(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """Alias for run() to match Issue #50 specs."""

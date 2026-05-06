@@ -62,16 +62,28 @@ Use os workflows automatizados abaixo para garantir o rito completo:
 
 ### Pull Request Protocol (Mandatory)
 
-Ao criar um Pull Request, é **obrigatório** garantir que os seguintes metadados estejam configurados:
+Ao criar um Pull Request, é **obrigatório** usar o template em **`.agent/templates/pr_description.md`** e garantir os seguintes metadados:
 - **Projeto**: Associar ao projeto correto do repositório.
 - **Milestone**: Deve corresponder à milestone definida na issue original.
 - **Labels**: Adicionar labels de tipo (ex: `type: feature`, `type: bug`) e módulo (ex: `module: stats`).
+
+**Seções obrigatórias da descrição do PR** (nunca omitir):
+
+| Seção | O que colocar |
+|-------|--------------|
+| `📝 Contexto` | Por que o PR existe; link para a issue. |
+| `🛠️ Implementação` | O que foi feito e decisões de design. |
+| `🛡️ Risco & Rollback` | Nível de risco (`Baixo/Médio/Alto`), breaking changes, como reverter. |
+| `🧪 Impacto & Testes` | Cobertura, tipos de teste, como validar. |
+| `🔗 Vínculos` | Issue, Milestone, Projeto. |
+| `✅ Checklist` | Acceptance criteria, testes, lint, cobertura. |
+| `🖥️ Evidência Técnica` | Output de teste ou execução que comprova o funcionamento. |
 
 **Fluxo completo:**
 ```
 /issue-start 46   →  branch criada, plano aprovado, implementação
                   →  commits incrementais durante o trabalho
-                  →  PR criado com **Projeto**, **Milestone** e **Labels** configurados.
+                  →  PR criado com template completo + Projeto, Milestone e Labels.
 /issue-close 46 71 →  checkboxes, labels, comentário, branch cleanup
 ```
 
