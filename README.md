@@ -259,7 +259,7 @@ Right now, the main narrative lives in this README (EN / PT-BR) plus the testing
 
 | Notebook | Description |
 |----------|-------------|
-| [`notebooks/multiclass_example.ipynb`](notebooks/multiclass_example.ipynb) | End-to-end multiclass pipeline: Wine dataset → binning → `MulticlassSelector` → `OvRWoeAdapter` → LightGBM → `MulticlassEvaluator` → `ProjectContext`. |
+| [`notebooks/multiclass_example.ipynb`](notebooks/multiclass_example.ipynb) | End-to-end multiclass pipeline: Wine dataset → binning → `MulticlassSelector` → `OvRWoeAdapter` → LightGBM → `MulticlassEvaluator` → `ProjectContext`. |\n| [`notebooks/regression_example.ipynb`](notebooks/regression_example.ipynb) | End-to-end regression pipeline: California Housing → Audit → `RegressionSelector` (Spearman + VIF) → LightGBM → `RegressionEvaluator` → `StabilityReport` → `ProjectContext`. |
 
 ---
 
